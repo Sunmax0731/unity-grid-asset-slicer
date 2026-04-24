@@ -4,7 +4,7 @@ Unity Grid Asset Slicer is a Unity Editor extension package for slicing a grid-b
 
 ## Status
 
-This package is currently in the `0.1.0` foundation phase. The package scaffold, assembly definitions, and release planning are in place. Functional slicing services and Editor UI are tracked in GitHub Issues.
+This package is currently preparing the `0.1.0` BOOTH and GitHub release. Grid calculation, session JSON persistence, PNG export, replay samples, validation, and the first Editor window workflow are in place.
 
 ## Package Name
 
@@ -14,7 +14,7 @@ com.sunmax0731.grid-asset-slicer
 
 ## Public Menu Path
 
-Planned menu path:
+Menu path:
 
 ```text
 Tools > Grid Asset Slicer
@@ -29,5 +29,5 @@ Tools > Grid Asset Slicer
 5. Editor window workflow
 6. Validation and release packaging
 
-See the repository-level `docs/` folder for requirements, design, validation, and release planning.
+See `Documentation~/` for user-facing manuals and validation notes. See the repository-level `docs/` folder for requirements, design, validation, and release planning.
 
