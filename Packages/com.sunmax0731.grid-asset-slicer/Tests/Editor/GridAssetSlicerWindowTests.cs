@@ -17,7 +17,7 @@ namespace Sunmax.GridAssetSlicer.Editor.Tests
             Assert.That(method, Is.Not.Null);
 
             var menuItem = method.GetCustomAttributes<MenuItem>()
-                .SingleOrDefault(attribute => attribute.menuItem == "Tools/Grid Asset Slicer");
+                .SingleOrDefault(attribute => attribute.menuItem == "Tools/Grid Asset Slicer/Open");
 
             Assert.That(menuItem, Is.Not.Null);
         }

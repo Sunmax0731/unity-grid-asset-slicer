@@ -34,7 +34,7 @@ The package is also intended to work as a local package or Git URL package throu
 Open the editor window from:
 
 ```text
-Tools > Grid Asset Slicer
+Tools > Grid Asset Slicer > Open
 ```
 
 ## Basic Workflow
@@ -73,6 +73,8 @@ The Cell Inspector includes a selected-cell preview. Use `Show Outline`, `Backgr
 
 ## Export Settings
 
+Export settings are shown under the `Workspace` section in the main window.
+
 - `Output Folder`: target folder for generated PNG files.
 - `File Prefix`: prefix for generated file names.
 - `Start Index`: first sequence number.
@@ -87,6 +89,8 @@ Conflict behavior:
 
 If export fails for a cell, the quality report includes the affected cell, output path, and reported failure reason.
 When the source texture has Read/Write disabled, export creates a temporary readable copy and uses that copy for slicing without changing the original asset importer setting.
+
+Use the `Report Height` slider above the quality report to adjust the visible report area.
 
 ## Session JSON
 

@@ -18,7 +18,11 @@ namespace Sunmax.GridAssetSlicer.Editor
         private const string QualityPrefsPrefix = "Sunmax.GridAssetSlicer.Quality.";
         private const string LanguageModePrefsKey = "Sunmax.GridAssetSlicer.LanguageMode";
         private const string InspectorOutlinePrefsKey = "Sunmax.GridAssetSlicer.InspectorOutline";
+        private const string ReportHeightPrefsKey = "Sunmax.GridAssetSlicer.ReportHeight";
         private const string ReadableCopyFolder = "Assets/Generated/GridSlicer/.TempReadable";
+        private const float DefaultReportHeight = 140f;
+        private const float MinReportHeight = 90f;
+        private const float MaxReportHeight = 320f;
 
         private Texture2D _sourceTexture;
         private GridSettings _gridSettings = new GridSettings
@@ -55,9 +59,10 @@ namespace Sunmax.GridAssetSlicer.Editor
         private bool _showInspectorPreviewOutline = true;
         private Color _inspectorPreviewBackground = new Color(0.18f, 0.18f, 0.18f, 1f);
         private Color _inspectorPreviewOutlineColor = Color.cyan;
+        private float _reportHeight = DefaultReportHeight;
         private string _statusMessage = "Ready.";
 
-        [MenuItem("Tools/Grid Asset Slicer")]
+        [MenuItem("Tools/Grid Asset Slicer/Open")]
         public static void Open()
         {
             var window = GetWindow<GridAssetSlicerWindow>("Grid Asset Slicer");
@@ -72,6 +77,7 @@ namespace Sunmax.GridAssetSlicer.Editor
             _languageMode = LoadLanguageMode();
             _displayLanguage = GridAssetSlicerLocalization.ResolveLanguage(_languageMode);
             _showInspectorPreviewOutline = EditorPrefs.GetBool(InspectorOutlinePrefsKey, true);
+            _reportHeight = Mathf.Clamp(EditorPrefs.GetFloat(ReportHeightPrefsKey, DefaultReportHeight), MinReportHeight, MaxReportHeight);
         }
 
         private void OnGUI()
@@ -171,26 +177,6 @@ namespace Sunmax.GridAssetSlicer.Editor
                 _gridSettings.CellHeight = DrawNullableInt(T("cellHeight", "Cell Height"), _gridSettings.CellHeight);
 
                 EditorGUILayout.Space(10f);
-                EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    _exportSettings.OutputFolder = EditorGUILayout.TextField(T("outputFolder", "Output Folder"), _exportSettings.OutputFolder);
-                    if (GUILayout.Button("...", GUILayout.Width(28f)))
-                    {
-                        var selected = EditorUtility.OpenFolderPanel("Output Folder", Application.dataPath, "");
-                        if (!string.IsNullOrWhiteSpace(selected))
-                        {
-                            _exportSettings.OutputFolder = ToProjectRelativePath(selected);
-                        }
-                    }
-                }
-
-                _exportSettings.FilePrefix = EditorGUILayout.TextField(T("outputPrefix", "Output Prefix"), _exportSettings.FilePrefix);
-                _exportSettings.StartIndex = EditorGUILayout.IntField(T("startIndex", "Start Index"), _exportSettings.StartIndex);
-                _exportSettings.NumberPadding = EditorGUILayout.IntField(T("serialDigits", "Serial Digits"), _exportSettings.NumberPadding);
-                _exportSettings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup(T("conflictMode", "Conflict Mode"), _exportSettings.ConflictBehavior);
-
-                EditorGUILayout.Space(10f);
                 DrawQualityCheckSettings();
 
                 EditorGUILayout.Space(10f);
@@ -248,6 +234,9 @@ namespace Sunmax.GridAssetSlicer.Editor
                 EditorGUILayout.LabelField(T("excluded", "Excluded"), _selection.ExcludedCells.Count.ToString());
 
                 EditorGUILayout.Space(8f);
+                DrawOutputSettings();
+
+                EditorGUILayout.Space(8f);
                 EditorGUILayout.HelpBox(T("detachedPreviewHelp", "Preview is shown in a separate resizable window. Use the toolbar Preview button to inspect cells while editing settings here."), MessageType.Info);
 
                 if (_sourceTexture != null && _lastGridResult.Errors.Count > 0)
@@ -271,6 +260,28 @@ namespace Sunmax.GridAssetSlicer.Editor
                     EditorGUILayout.LabelField(T("error", "Error"), _lastExportResult.Errors.Count.ToString());
                 }
             }
+        }
+
+        private void DrawOutputSettings()
+        {
+            EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _exportSettings.OutputFolder = EditorGUILayout.TextField(T("outputFolder", "Output Folder"), _exportSettings.OutputFolder);
+                if (GUILayout.Button("...", GUILayout.Width(28f)))
+                {
+                    var selected = EditorUtility.OpenFolderPanel("Output Folder", Application.dataPath, "");
+                    if (!string.IsNullOrWhiteSpace(selected))
+                    {
+                        _exportSettings.OutputFolder = ToProjectRelativePath(selected);
+                    }
+                }
+            }
+
+            _exportSettings.FilePrefix = EditorGUILayout.TextField(T("outputPrefix", "Output Prefix"), _exportSettings.FilePrefix);
+            _exportSettings.StartIndex = EditorGUILayout.IntField(T("startIndex", "Start Index"), _exportSettings.StartIndex);
+            _exportSettings.NumberPadding = EditorGUILayout.IntField(T("serialDigits", "Serial Digits"), _exportSettings.NumberPadding);
+            _exportSettings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup(T("conflictMode", "Conflict Mode"), _exportSettings.ConflictBehavior);
         }
 
         private void DrawPreviewContent(ref Vector2 scroll, float maxHeight)
@@ -335,7 +346,7 @@ namespace Sunmax.GridAssetSlicer.Editor
                 if (_owner == null)
                 {
                     var language = GridAssetSlicerLocalization.ResolveLanguage(GridAssetSlicerLanguageMode.Auto);
-                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedPreviewReconnect", "Open Tools > Grid Asset Slicer again to reconnect the preview."), MessageType.Info);
+                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedPreviewReconnect", "Open Tools > Grid Asset Slicer > Open again to reconnect the preview."), MessageType.Info);
                     return;
                 }
 
@@ -374,7 +385,7 @@ namespace Sunmax.GridAssetSlicer.Editor
                 if (_owner == null)
                 {
                     var language = GridAssetSlicerLocalization.ResolveLanguage(GridAssetSlicerLanguageMode.Auto);
-                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedHelpReconnect", "Open Tools > Grid Asset Slicer again to reconnect help."), MessageType.Info);
+                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedHelpReconnect", "Open Tools > Grid Asset Slicer > Open again to reconnect help."), MessageType.Info);
                     return;
                 }
 
@@ -453,8 +464,20 @@ namespace Sunmax.GridAssetSlicer.Editor
         private void DrawQualityReport()
         {
             EditorGUILayout.Space(6f);
-            EditorGUILayout.LabelField(T("qualityReport", "Quality Check Report"), EditorStyles.boldLabel);
-            _reportScroll = EditorGUILayout.BeginScrollView(_reportScroll, GUI.skin.box, GUILayout.Height(110f));
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField(T("qualityReport", "Quality Check Report"), EditorStyles.boldLabel, GUILayout.Width(220f));
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.LabelField(T("reportHeight", "Report Height"), GUILayout.Width(90f));
+                var nextReportHeight = EditorGUILayout.Slider(_reportHeight, MinReportHeight, MaxReportHeight, GUILayout.Width(220f));
+                if (!Mathf.Approximately(nextReportHeight, _reportHeight))
+                {
+                    _reportHeight = nextReportHeight;
+                    EditorPrefs.SetFloat(ReportHeightPrefsKey, _reportHeight);
+                }
+            }
+
+            _reportScroll = EditorGUILayout.BeginScrollView(_reportScroll, GUI.skin.box, GUILayout.Height(_reportHeight));
             DrawReportHeader();
 
             foreach (var check in BuildQualityReport())

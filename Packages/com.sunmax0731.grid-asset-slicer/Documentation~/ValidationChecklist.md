@@ -15,7 +15,7 @@ The gate must fail when Unity returns a non-zero exit code, the result XML is mi
 ## Manual Smoke
 
 1. Open the project in Unity.
-2. Open `Tools > Grid Asset Slicer`.
+2. Open `Tools > Grid Asset Slicer > Open`.
 3. Select `Packages/com.sunmax0731.grid-asset-slicer/Samples~/BasicGrid/basic-grid-2x2.png` as the source image.
 4. Set rows to `2`, columns to `2`, cell width to `32`, and cell height to `32`.
 5. Confirm the preview shows four cells matching the source image.

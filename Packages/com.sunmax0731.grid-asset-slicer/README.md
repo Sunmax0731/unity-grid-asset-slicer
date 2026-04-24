@@ -17,7 +17,7 @@ com.sunmax0731.grid-asset-slicer
 Menu path:
 
 ```text
-Tools > Grid Asset Slicer
+Tools > Grid Asset Slicer > Open
 ```
 
 ## Development Order

@@ -97,7 +97,7 @@ Goal: main tool entry point を追加する。
 
 Scope:
 
-- `Tools > Grid Asset Slicer`
+- `Tools > Grid Asset Slicer > Open`
 - source texture field
 - grid settings fields
 - export settings fields
@@ -145,4 +145,3 @@ Acceptance:
 
 - fresh Unity project から Git package として導入できる。
 - manual smoke path が文書化され、通る。
-
