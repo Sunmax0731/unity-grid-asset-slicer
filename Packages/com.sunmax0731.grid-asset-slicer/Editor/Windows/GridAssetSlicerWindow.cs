@@ -18,6 +18,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         private const string QualityPrefsPrefix = "Sunmax.GridAssetSlicer.Quality.";
         private const string LanguageModePrefsKey = "Sunmax.GridAssetSlicer.LanguageMode";
         private const string InspectorOutlinePrefsKey = "Sunmax.GridAssetSlicer.InspectorOutline";
+        private const string ReadableCopyFolder = "Assets/Generated/GridSlicer/.TempReadable";
 
         private Texture2D _sourceTexture;
         private GridSettings _gridSettings = new GridSettings
@@ -380,40 +381,40 @@ namespace Sunmax.GridAssetSlicer.Editor
                 _scroll = EditorGUILayout.BeginScrollView(_scroll);
                 _owner.DrawHelpSection("sourceImage", "Source Image", new[]
                 {
-                    ("help.sourceImage", "Source Image selects the texture asset to preview and export. Language changes the tool UI text.")
+                    ("sourceImage", "Source Image", "help.sourceImage", "Source Image selects the texture asset to preview and export. Language changes the tool UI text.")
                 });
                 _owner.DrawHelpSection("gridSettings", "Grid Settings", new[]
                 {
-                    ("help.rows", "Vertical cell count in the source image."),
-                    ("help.columns", "Horizontal cell count in the source image."),
-                    ("help.marginLeft", "Pixels to skip from the left edge before the grid starts."),
-                    ("help.marginTop", "Pixels to skip from the top edge before the grid starts."),
-                    ("help.marginRight", "Pixels excluded from the right edge after the grid ends."),
-                    ("help.marginBottom", "Pixels excluded from the bottom edge after the grid ends."),
-                    ("help.gutterX", "Horizontal pixel spacing between neighboring cells."),
-                    ("help.gutterY", "Vertical pixel spacing between neighboring cells."),
-                    ("help.cellWidth", "Explicit cell width. Turn it off to calculate width from the source image, margins, gutters, and column count."),
-                    ("help.cellHeight", "Explicit cell height. Turn it off to calculate height from the source image, margins, gutters, and row count.")
+                    ("rows", "Rows", "help.rows", "Vertical cell count in the source image."),
+                    ("columns", "Columns", "help.columns", "Horizontal cell count in the source image."),
+                    ("marginLeft", "Margin Left", "help.marginLeft", "Pixels to skip from the left edge before the grid starts."),
+                    ("marginTop", "Margin Top", "help.marginTop", "Pixels to skip from the top edge before the grid starts."),
+                    ("marginRight", "Margin Right", "help.marginRight", "Pixels excluded from the right edge after the grid ends."),
+                    ("marginBottom", "Margin Bottom", "help.marginBottom", "Pixels excluded from the bottom edge after the grid ends."),
+                    ("gutterX", "Gutter X", "help.gutterX", "Horizontal pixel spacing between neighboring cells."),
+                    ("gutterY", "Gutter Y", "help.gutterY", "Vertical pixel spacing between neighboring cells."),
+                    ("cellWidth", "Cell Width", "help.cellWidth", "Explicit cell width. Turn it off to calculate width from the source image, margins, gutters, and column count."),
+                    ("cellHeight", "Cell Height", "help.cellHeight", "Explicit cell height. Turn it off to calculate height from the source image, margins, gutters, and row count.")
                 });
                 _owner.DrawHelpSection("output", "Output", new[]
                 {
-                    ("help.outputFolder", "Project-relative folder where generated PNG files are written."),
-                    ("help.outputPrefix", "Prefix used before the serial number in each generated file name."),
-                    ("help.startIndex", "First serial number used when naming exported cells."),
-                    ("help.serialDigits", "Minimum digit count for serial numbers. For example, 3 produces 001."),
-                    ("help.conflictMode", "Select how export behaves when a target file already exists: overwrite, skip, or create a duplicate name.")
+                    ("outputFolder", "Output Folder", "help.outputFolder", "Project-relative folder where generated PNG files are written."),
+                    ("outputPrefix", "Output Prefix", "help.outputPrefix", "Prefix used before the serial number in each generated file name."),
+                    ("startIndex", "Start Index", "help.startIndex", "First serial number used when naming exported cells."),
+                    ("serialDigits", "Serial Digits", "help.serialDigits", "Minimum digit count for serial numbers. For example, 3 produces 001."),
+                    ("conflictMode", "Conflict Mode", "help.conflictMode", "Select how export behaves when a target file already exists: overwrite, skip, or create a duplicate name.")
                 });
                 _owner.DrawHelpSection("qualityChecks", "Quality Checks", new[]
                 {
-                    ("help.gridBounds", "Checks whether the calculated grid fits inside the source image."),
-                    ("help.readableSource", "Checks whether Unity can read source texture pixels for PNG export."),
-                    ("help.outputSettings", "Checks whether export folder and file naming settings can produce valid output paths."),
-                    ("help.includedCells", "Checks whether at least one cell is still included for export.")
+                    ("gridBounds", "Grid Bounds", "help.gridBounds", "Checks whether the calculated grid fits inside the source image."),
+                    ("readableSource", "Readable Source", "help.readableSource", "Checks whether Unity can read source texture pixels for PNG export."),
+                    ("outputSettings", "Output Settings", "help.outputSettings", "Checks whether export folder and file naming settings can produce valid output paths."),
+                    ("includedCells", "Included Cells", "help.includedCells", "Checks whether at least one cell is still included for export.")
                 });
                 _owner.DrawHelpSection("display", "Display", new[]
                 {
-                    ("help.parameterHelp", "Shows parameter descriptions in a separate non-modal window."),
-                    ("help.inspectorPreview", "Controls the selected-cell preview background and outline in the inspector.")
+                    ("parameterHelp", "Parameter Help", "help.parameterHelp", "Shows parameter descriptions in a separate non-modal window."),
+                    ("inspectorPreviewSettings", "Preview Display", "help.inspectorPreview", "Controls the selected-cell preview background and outline in the inspector.")
                 });
                 EditorGUILayout.EndScrollView();
             }
@@ -641,12 +642,18 @@ namespace Sunmax.GridAssetSlicer.Editor
             _inspectorPreviewOutlineColor = EditorGUILayout.ColorField(T("outlineColor", "Outline Color"), _inspectorPreviewOutlineColor);
         }
 
-        private void DrawHelpSection(string titleKey, string englishTitle, IEnumerable<(string Key, string EnglishText)> entries)
+        private void DrawHelpSection(string titleKey, string englishTitle, IEnumerable<(string LabelKey, string EnglishLabel, string HelpKey, string EnglishText)> entries)
         {
             EditorGUILayout.LabelField(T(titleKey, englishTitle), EditorStyles.boldLabel);
             foreach (var entry in entries)
             {
-                EditorGUILayout.HelpBox(T(entry.Key, entry.EnglishText), MessageType.None);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    EditorGUILayout.LabelField(T(entry.LabelKey, entry.EnglishLabel), EditorStyles.boldLabel, GUILayout.Width(150f));
+                    EditorGUILayout.LabelField(T(entry.HelpKey, entry.EnglishText), EditorStyles.wordWrappedLabel);
+                }
+
+                EditorGUILayout.Space(4f);
             }
 
             EditorGUILayout.Space(8f);
@@ -672,12 +679,86 @@ namespace Sunmax.GridAssetSlicer.Editor
                 return;
             }
 
-            var result = PngExporter.Export(new PngExportRequest(_sourceTexture, _lastGridResult.Cells, _selection, _exportSettings));
-            _lastExportResult = result;
-            AssetDatabaseExportRefresher.RefreshIfExportedUnderAssets(result);
-            _statusMessage = result.IsSuccess
-                ? TFormat("status.exported", "Exported {0}, skipped {1}.", result.ExportedFiles.Count, result.SkippedFiles.Count)
-                : TFormat("status.exportFailed", "Export completed with {0} error(s).", result.Errors.Count);
+            var tempCopyPath = string.Empty;
+            Texture2D exportTexture = null;
+            try
+            {
+                exportTexture = PrepareExportTexture(out tempCopyPath);
+                var result = PngExporter.Export(new PngExportRequest(exportTexture, _lastGridResult.Cells, _selection, _exportSettings));
+                _lastExportResult = result;
+                AssetDatabaseExportRefresher.RefreshIfExportedUnderAssets(result);
+                _statusMessage = result.IsSuccess
+                    ? TFormat("status.exported", "Exported {0}, skipped {1}.", result.ExportedFiles.Count, result.SkippedFiles.Count)
+                    : TFormat("status.exportFailed", "Export completed with {0} error(s).", result.Errors.Count);
+            }
+            finally
+            {
+                CleanupReadableCopy(tempCopyPath);
+            }
+        }
+
+        private Texture2D PrepareExportTexture(out string tempCopyPath)
+        {
+            tempCopyPath = string.Empty;
+            if (IsSourceReadable())
+            {
+                return _sourceTexture;
+            }
+
+            var sourcePath = AssetDatabase.GetAssetPath(_sourceTexture);
+            if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+            {
+                return _sourceTexture;
+            }
+
+            if (!AssetDatabase.IsValidFolder("Assets/Generated"))
+            {
+                AssetDatabase.CreateFolder("Assets", "Generated");
+            }
+
+            if (!AssetDatabase.IsValidFolder("Assets/Generated/GridSlicer"))
+            {
+                AssetDatabase.CreateFolder("Assets/Generated", "GridSlicer");
+            }
+
+            if (!AssetDatabase.IsValidFolder(ReadableCopyFolder))
+            {
+                AssetDatabase.CreateFolder("Assets/Generated/GridSlicer", ".TempReadable");
+            }
+
+            var extension = Path.GetExtension(sourcePath);
+            var fileName = $"{Path.GetFileNameWithoutExtension(sourcePath)}_{Guid.NewGuid():N}{extension}";
+            tempCopyPath = $"{ReadableCopyFolder}/{fileName}";
+
+            if (!AssetDatabase.CopyAsset(sourcePath, tempCopyPath))
+            {
+                tempCopyPath = string.Empty;
+                return _sourceTexture;
+            }
+
+            var importer = AssetImporter.GetAtPath(tempCopyPath) as TextureImporter;
+            if (importer != null)
+            {
+                importer.isReadable = true;
+                importer.SaveAndReimport();
+            }
+            else
+            {
+                AssetDatabase.ImportAsset(tempCopyPath, ImportAssetOptions.ForceUpdate);
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(tempCopyPath) ?? _sourceTexture;
+        }
+
+        private static void CleanupReadableCopy(string tempCopyPath)
+        {
+            if (string.IsNullOrWhiteSpace(tempCopyPath))
+            {
+                return;
+            }
+
+            AssetDatabase.DeleteAsset(tempCopyPath);
+            AssetDatabase.Refresh();
         }
 
         private void SaveSession()

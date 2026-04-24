@@ -86,6 +86,7 @@ Cell Inspector には選択 cell の preview が表示されます。`Show Outli
 - `Duplicate`: `_copy01` のような別名で出力します。
 
 cell の書き出しに失敗した場合、quality report に対象 cell、出力先、失敗原因が表示されます。
+元画像の Read/Write が無効な場合、書き出し時に一時的な読み取り可能コピーを作成し、そのコピーを使って slice します。元アセットの importer 設定は変更し続けません。
 
 ## Session JSON
 

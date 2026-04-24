@@ -86,6 +86,7 @@ Conflict behavior:
 - `Duplicate`: write to a new `_copy01` style name.
 
 If export fails for a cell, the quality report includes the affected cell, output path, and reported failure reason.
+When the source texture has Read/Write disabled, export creates a temporary readable copy and uses that copy for slicing without changing the original asset importer setting.
 
 ## Session JSON
 
