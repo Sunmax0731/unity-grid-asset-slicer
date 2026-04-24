@@ -2,7 +2,7 @@
 
 ## 1. Environment
 
-- Unity: 6000.3.13f1
+- Unity: 6000.4.0f1
 - OS priority: Windows
 - Project path: `D:\Claude\UnityEditor-Dev\unity-grid-asset-slicer`
 
@@ -23,7 +23,7 @@ package scaffold 後、EditMode test を追加する。
 tests 作成後は次の形で EditMode tests を実行する。
 
 ```powershell
-& "C:\Program Files\Unity\Hub\Editor\6000.3.13f1\Editor\Unity.exe" `
+& "C:\Program Files\Unity\6000.4.0f1\Editor\Unity.exe" `
   -batchmode `
   -projectPath "D:\Claude\UnityEditor-Dev\unity-grid-asset-slicer" `
   -runTests `

@@ -1,5 +1,5 @@
 param(
-    [string]$UnityPath = "C:\Program Files\Unity\6000.3.13f1\Editor\Unity.exe",
+    [string]$UnityPath = "C:\Program Files\Unity\6000.4.0f1\Editor\Unity.exe",
     [string]$ProjectPath = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
     [string]$ResultsPath = "",
     [string]$LogPath = "",

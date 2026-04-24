@@ -6,7 +6,7 @@
 
 - Repository: `D:\Claude\UnityEditor-Dev\unity-grid-asset-slicer`
 - Product: Unity Grid Asset Slicer
-- Unity version: 6000.3.13f1
+- Unity version: 6000.4.0f1
 - Delivery target: UPM Git package
 - Main menu path: `Tools > Grid Asset Slicer > Open`
 

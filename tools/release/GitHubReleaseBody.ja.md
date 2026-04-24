@@ -72,7 +72,7 @@ GitHub Release と BOOTH 配布物は同一内容です。
 
 検証環境:
 
-- Unity `6000.3.13f1`
+- Unity `6000.4.0f1`
 - Windows
 - EditMode tests
 

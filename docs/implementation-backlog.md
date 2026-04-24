@@ -17,7 +17,7 @@ Scope:
 
 Acceptance:
 
-- Unity 6000.3.13f1 で compile error がない。
+- Unity 6000.4.0f1 で compile error がない。
 - Editor window 実装はまだ不要。
 
 ### 2. Core Models and Grid Calculator

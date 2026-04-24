@@ -9,7 +9,7 @@ Unity Grid Asset Slicer は、グリッド状に配置された1枚の画像を 
 ## 2. 前提
 
 - Unity Editor 内で動作する。
-- 初期検証対象は Unity 6000.3.13f1。
+- 初期検証対象は Unity 6000.4.0f1。
 - Unity 6000.x 系での利用を目標にする。
 - 開発と初期検証は Windows を優先する。
 - MVP の入力形式は PNG。

@@ -118,7 +118,7 @@ Do not start with preview UI before the data model and grid calculator are stabl
 After tests exist:
 
 ```powershell
-& "C:\Program Files\Unity\Hub\Editor\6000.3.13f1\Editor\Unity.exe" `
+& "C:\Program Files\Unity\6000.4.0f1\Editor\Unity.exe" `
   -batchmode `
   -projectPath "D:\Claude\UnityEditor-Dev\unity-grid-asset-slicer" `
   -runTests `
