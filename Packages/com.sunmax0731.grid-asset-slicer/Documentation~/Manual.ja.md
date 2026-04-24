@@ -50,7 +50,7 @@ Tools > Grid Asset Slicer > Open
 
 ## Grid 設定
 
-- `Display` セクションの `Open Help Window` を使うと、操作を続けたまま各入力項目の説明を別ウィンドウで表示できます。
+- ツールバーの `Help` ボタンを使うと、操作を続けたまま各入力項目の説明を別ウィンドウで表示できます。
 - `Rows`: 縦方向の cell 数です。
 - `Columns`: 横方向の cell 数です。
 - `Margin Left / Top / Right / Bottom`: 画像端から grid までの余白です。

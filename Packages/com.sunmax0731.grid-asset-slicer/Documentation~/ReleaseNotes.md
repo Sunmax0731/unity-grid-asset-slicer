@@ -14,6 +14,7 @@ Initial BOOTH and GitHub release candidate scope.
 - PNG export service.
 - Export file naming with overwrite, skip, and duplicate conflict behavior.
 - Session JSON save and load.
+- Section dividers, wider pane spacing, and toolbar Help access for clearer editor navigation.
 - Deterministic sample PNGs and replay fixtures under `Samples~/`.
 - EditMode validation gate: `tools/validation/run-editmode-tests.ps1`.
 - Manual validation checklist.

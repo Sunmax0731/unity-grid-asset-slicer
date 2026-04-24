@@ -45,6 +45,7 @@ namespace Sunmax.GridAssetSlicer.Editor.Localization
             ["outputSettings"] = "出力設定",
             ["includedCells"] = "対象セル",
             ["display"] = "表示",
+            ["help"] = "ヘルプ",
             ["parameterHelp"] = "パラメータヘルプ",
             ["openHelpWindow"] = "ヘルプウィンドウを開く",
             ["displayHelp"] = "メインウィンドウには設定とインスペクタを表示し、グリッドプレビューは別ウィンドウで確認します。",

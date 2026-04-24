@@ -50,7 +50,7 @@ Tools > Grid Asset Slicer > Open
 
 ## Grid Settings
 
-- Use `Open Help Window` in the `Display` section to show parameter explanations in a separate non-modal window while keeping the tool editable.
+- Use the toolbar `Help` button to show parameter explanations in a separate non-modal window while keeping the tool editable.
 - `Rows`: vertical cell count.
 - `Columns`: horizontal cell count.
 - `Margin Left / Top / Right / Bottom`: pixel margins around the grid.

@@ -13,6 +13,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         private const string ToolVersion = "0.1.0";
         private const float LeftPaneWidth = 280f;
         private const float RightPaneWidth = 320f;
+        private const float PaneGap = 18f;
         private const float CellSize = 72f;
         private const float CellGap = 4f;
         private const string QualityPrefsPrefix = "Sunmax.GridAssetSlicer.Quality.";
@@ -88,7 +89,11 @@ namespace Sunmax.GridAssetSlicer.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 DrawLeftPane();
+                DrawPaneSeparator();
+                GUILayout.Space(PaneGap);
                 DrawCenterPane();
+                GUILayout.Space(PaneGap);
+                DrawPaneSeparator();
                 DrawRightPane();
             }
 
@@ -133,6 +138,11 @@ namespace Sunmax.GridAssetSlicer.Editor
                     LoadSession();
                 }
 
+                if (GUILayout.Button(T("help", "Help"), EditorStyles.toolbarButton, GUILayout.Width(80f)))
+                {
+                    OpenParameterHelpWindow();
+                }
+
                 DrawLanguagePopup();
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.LabelField(_statusMessage, EditorStyles.miniLabel, GUILayout.MinWidth(180f));
@@ -164,7 +174,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(LeftPaneWidth)))
             {
-                EditorGUILayout.LabelField(T("gridSettings", "Grid Settings"), EditorStyles.boldLabel);
+                DrawSectionHeader(T("gridSettings", "Grid Settings"));
                 _gridSettings.Rows = EditorGUILayout.IntField(T("rows", "Rows"), _gridSettings.Rows);
                 _gridSettings.Columns = EditorGUILayout.IntField(T("columns", "Columns"), _gridSettings.Columns);
                 _gridSettings.MarginLeft = EditorGUILayout.IntField(T("marginLeft", "Margin Left"), _gridSettings.MarginLeft);
@@ -180,19 +190,14 @@ namespace Sunmax.GridAssetSlicer.Editor
                 DrawQualityCheckSettings();
 
                 EditorGUILayout.Space(10f);
-                EditorGUILayout.LabelField(T("display", "Display"), EditorStyles.boldLabel);
-                if (GUILayout.Button(T("openHelpWindow", "Open Help Window")))
-                {
-                    OpenParameterHelpWindow();
-                }
-
+                DrawSectionHeader(T("display", "Display"));
                 EditorGUILayout.HelpBox(T("displayHelp", "The main window keeps settings and inspection controls visible. Use the separate preview window for the grid preview."), MessageType.Info);
             }
         }
 
         private void DrawQualityCheckSettings()
         {
-            EditorGUILayout.LabelField(T("qualityChecks", "Quality Checks"), EditorStyles.boldLabel);
+            DrawSectionHeader(T("qualityChecks", "Quality Checks"));
             var nextGridBounds = EditorGUILayout.Toggle(T("gridBounds", "Grid Bounds"), _qualityChecks.GridBounds);
             var nextReadableSource = EditorGUILayout.Toggle(T("readableSource", "Readable Source"), _qualityChecks.ReadableSource);
             var nextOutputSettings = EditorGUILayout.Toggle(T("outputSettings", "Output Settings"), _qualityChecks.OutputSettings);
@@ -224,7 +229,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.MinWidth(360f), GUILayout.ExpandWidth(true)))
             {
-                EditorGUILayout.LabelField(T("workspace", "Workspace"), EditorStyles.boldLabel);
+                DrawSectionHeader(T("workspace", "Workspace"));
                 CalculatePreview();
 
                 EditorGUILayout.LabelField(T("source", "Source"), _sourceTexture == null ? "-" : AssetDatabase.GetAssetPath(_sourceTexture));
@@ -264,7 +269,7 @@ namespace Sunmax.GridAssetSlicer.Editor
 
         private void DrawOutputSettings()
         {
-            EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
+            DrawSectionHeader(T("output", "Output"));
             using (new EditorGUILayout.HorizontalScope())
             {
                 _exportSettings.OutputFolder = EditorGUILayout.TextField(T("outputFolder", "Output Folder"), _exportSettings.OutputFolder);
@@ -435,7 +440,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(RightPaneWidth)))
             {
-                EditorGUILayout.LabelField(T("cellInspector", "Cell Inspector"), EditorStyles.boldLabel);
+                DrawSectionHeader(T("cellInspector", "Cell Inspector"));
                 var selectedRect = GetSelectedRect();
                 if (selectedRect == null)
                 {
@@ -466,7 +471,7 @@ namespace Sunmax.GridAssetSlicer.Editor
             EditorGUILayout.Space(6f);
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField(T("qualityReport", "Quality Check Report"), EditorStyles.boldLabel, GUILayout.Width(220f));
+                DrawSectionHeader(T("qualityReport", "Quality Check Report"), GUILayout.Width(260f));
                 GUILayout.FlexibleSpace();
                 EditorGUILayout.LabelField(T("reportHeight", "Report Height"), GUILayout.Width(90f));
                 var nextReportHeight = EditorGUILayout.Slider(_reportHeight, MinReportHeight, MaxReportHeight, GUILayout.Width(220f));
@@ -653,7 +658,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         private void DrawInspectorPreviewSettings()
         {
             EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField(T("inspectorPreviewSettings", "Preview Display"), EditorStyles.boldLabel);
+            DrawSectionHeader(T("inspectorPreviewSettings", "Preview Display"));
             var nextOutline = EditorGUILayout.Toggle(T("showOutline", "Show Outline"), _showInspectorPreviewOutline);
             if (nextOutline != _showInspectorPreviewOutline)
             {
@@ -680,6 +685,30 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
 
             EditorGUILayout.Space(8f);
+        }
+
+        private static void DrawSectionHeader(string label, params GUILayoutOption[] options)
+        {
+            using (new EditorGUILayout.HorizontalScope(options))
+            {
+                EditorGUILayout.LabelField(label, EditorStyles.boldLabel, GUILayout.Width(Mathf.Max(120f, EditorStyles.boldLabel.CalcSize(new GUIContent(label)).x + 8f)));
+                var rect = GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
+                if (Event.current.type == EventType.Repaint)
+                {
+                    EditorGUI.DrawRect(new Rect(rect.x, rect.y + 7f, rect.width, 1f), new Color(0.42f, 0.42f, 0.42f, 1f));
+                }
+            }
+
+            EditorGUILayout.Space(4f);
+        }
+
+        private static void DrawPaneSeparator()
+        {
+            var rect = GUILayoutUtility.GetRect(1f, 1f, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(rect, new Color(0.25f, 0.25f, 0.25f, 1f));
+            }
         }
 
         private void CalculatePreview()
