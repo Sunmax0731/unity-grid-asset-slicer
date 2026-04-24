@@ -77,6 +77,12 @@ Each issue completion should include an Issue comment or final report with:
 - merge result
 - whether `Agents.md` / `Skill.md` was updated or intentionally left unchanged
 
+## GitHub Issue Language
+
+Post GitHub Issues and Issue comments in Japanese.
+
+Use English only where it is clearer as a literal identifier, such as code symbols, file paths, command names, package names, enum values, branch names, validation output, release artifact names, or quoted error text.
+
 ## Architecture Rules
 
 - Put reusable logic in services, not in the Editor window.
