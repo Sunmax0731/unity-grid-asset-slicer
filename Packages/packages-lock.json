@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.sunmax0731.grid-asset-slicer": {
+      "version": "file:com.sunmax0731.grid-asset-slicer",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.12",
       "depth": 0,

@@ -1,0 +1,18 @@
+{
+  "name": "com.sunmax0731.grid-asset-slicer",
+  "displayName": "Unity Grid Asset Slicer",
+  "version": "0.1.0",
+  "unity": "6000.0",
+  "description": "Unity Editor extension for slicing grid-based source images into individual PNG assets with replayable slice session metadata.",
+  "keywords": [
+    "editor",
+    "texture",
+    "png",
+    "grid",
+    "slicer"
+  ],
+  "author": {
+    "name": "Sunmax0731"
+  }
+}
+
