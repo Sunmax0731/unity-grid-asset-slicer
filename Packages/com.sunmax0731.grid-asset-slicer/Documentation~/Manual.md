@@ -50,6 +50,7 @@ Tools > Grid Asset Slicer
 
 ## Grid Settings
 
+- Enable `Parameter Help` in the `Display` section to show inline explanations while keeping the tool editable.
 - `Rows`: vertical cell count.
 - `Columns`: horizontal cell count.
 - `Margin Left / Top / Right / Bottom`: pixel margins around the grid.

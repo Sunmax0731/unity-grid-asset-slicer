@@ -40,6 +40,7 @@ namespace Sunmax.GridAssetSlicer.Editor.Localization
             ["outputSettings"] = "出力設定",
             ["includedCells"] = "対象セル",
             ["display"] = "表示",
+            ["parameterHelp"] = "パラメータヘルプ",
             ["displayHelp"] = "左に設定、中央にグリッド、右にインスペクタ、下に品質レポートを表示します。",
             ["previewTitle"] = "プレビュー ({0})",
             ["noSourceImage"] = "元画像なし",
@@ -73,7 +74,28 @@ namespace Sunmax.GridAssetSlicer.Editor.Localization
             ["quality.readable.fail"] = "元画像が未選択、または読み込めません。書き出しに失敗する可能性があります。",
             ["quality.output.pass"] = "出力設定は有効です。",
             ["quality.included.pass"] = "{0} 個のセルが出力対象です。",
-            ["quality.included.fail"] = "出力対象のセルがありません。"
+            ["quality.included.fail"] = "出力対象のセルがありません。",
+            ["help.sourceImage"] = "Source Image はプレビューと書き出しに使うテクスチャアセットです。Language はツールの表示言語を切り替えます。",
+            ["help.rows"] = "元画像内の縦方向のセル数です。",
+            ["help.columns"] = "元画像内の横方向のセル数です。",
+            ["help.marginLeft"] = "画像左端からグリッド開始位置まで除外するピクセル数です。",
+            ["help.marginTop"] = "画像上端からグリッド開始位置まで除外するピクセル数です。",
+            ["help.marginRight"] = "グリッド終了位置から画像右端まで除外するピクセル数です。",
+            ["help.marginBottom"] = "グリッド終了位置から画像下端まで除外するピクセル数です。",
+            ["help.gutterX"] = "隣り合うセル間の横方向の隙間をピクセルで指定します。",
+            ["help.gutterY"] = "隣り合うセル間の縦方向の隙間をピクセルで指定します。",
+            ["help.cellWidth"] = "セル幅を明示指定します。OFF にすると、画像サイズ、余白、隙間、列数から自動計算します。",
+            ["help.cellHeight"] = "セル高さを明示指定します。OFF にすると、画像サイズ、余白、隙間、行数から自動計算します。",
+            ["help.outputFolder"] = "生成した PNG の保存先です。Unity プロジェクトからの相対パスで扱います。",
+            ["help.outputPrefix"] = "生成ファイル名の連番前に付ける文字列です。",
+            ["help.startIndex"] = "書き出しファイル名に使う最初の連番です。",
+            ["help.serialDigits"] = "連番の最小桁数です。3 の場合は 001 のようにゼロ埋めします。",
+            ["help.conflictMode"] = "同名ファイルが既にある場合に、上書き、スキップ、複製名作成のどれで処理するかを指定します。",
+            ["help.gridBounds"] = "計算されたグリッドが元画像の範囲内に収まっているかを確認します。",
+            ["help.readableSource"] = "PNG 書き出しのため、Unity が元画像のピクセルを読み取れるかを確認します。",
+            ["help.outputSettings"] = "出力フォルダとファイル名設定から有効な出力パスを作れるかを確認します。",
+            ["help.includedCells"] = "書き出し対象として含まれているセルが 1 つ以上あるかを確認します。",
+            ["help.parameterHelp"] = "操作やプレビューを止めずに、各入力項目の説明をインライン表示します。"
         };
 
         public static GridAssetSlicerDisplayLanguage ResolveLanguage(GridAssetSlicerLanguageMode mode)

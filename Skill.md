@@ -92,6 +92,7 @@ Use English only where it is clearer as a literal identifier, such as code symbo
 - Keep OpenCV and other image-analysis dependencies optional.
 - Avoid project-specific item, skill, or game catalog dependencies.
 - Use `docs/Image.png` as the visual reference for the Editor UI layout and interaction model. Match the workflow structure, but keep implementation scoped to each Issue.
+- For UI help, prefer inline or docked explanations that do not block parameter editing, preview interaction, or export setup.
 
 ## First Implementation Target
 
