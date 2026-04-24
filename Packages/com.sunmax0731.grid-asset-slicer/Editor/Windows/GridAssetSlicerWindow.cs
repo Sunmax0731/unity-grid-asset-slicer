@@ -151,7 +151,6 @@ namespace Sunmax.GridAssetSlicer.Editor
 
         private void DrawLanguagePopup()
         {
-            EditorGUILayout.LabelField(T("language", "Language"), GUILayout.Width(70f));
             var modes = (GridAssetSlicerLanguageMode[])Enum.GetValues(typeof(GridAssetSlicerLanguageMode));
             var labels = modes
                 .Select(mode => GridAssetSlicerLocalization.GetLanguageModeLabel(_displayLanguage, mode))
@@ -186,10 +185,10 @@ namespace Sunmax.GridAssetSlicer.Editor
                 _gridSettings.CellWidth = DrawNullableInt(T("cellWidth", "Cell Width"), _gridSettings.CellWidth);
                 _gridSettings.CellHeight = DrawNullableInt(T("cellHeight", "Cell Height"), _gridSettings.CellHeight);
 
-                EditorGUILayout.Space(10f);
+                DrawSectionSeparator();
                 DrawQualityCheckSettings();
 
-                EditorGUILayout.Space(10f);
+                DrawSectionSeparator();
                 DrawSectionHeader(T("display", "Display"));
                 EditorGUILayout.HelpBox(T("displayHelp", "The main window keeps settings and inspection controls visible. Use the separate preview window for the grid preview."), MessageType.Info);
             }
@@ -238,10 +237,10 @@ namespace Sunmax.GridAssetSlicer.Editor
                 EditorGUILayout.LabelField(T("included", "Included"), _lastGridResult.Cells.Count(cell => !IsExcluded(cell.Coordinate)).ToString());
                 EditorGUILayout.LabelField(T("excluded", "Excluded"), _selection.ExcludedCells.Count.ToString());
 
-                EditorGUILayout.Space(8f);
+                DrawSectionSeparator();
                 DrawOutputSettings();
 
-                EditorGUILayout.Space(8f);
+                DrawSectionSeparator();
                 EditorGUILayout.HelpBox(T("detachedPreviewHelp", "Preview is shown in a separate resizable window. Use the toolbar Preview button to inspect cells while editing settings here."), MessageType.Info);
 
                 if (_sourceTexture != null && _lastGridResult.Errors.Count > 0)
@@ -252,8 +251,8 @@ namespace Sunmax.GridAssetSlicer.Editor
                     }
                 }
 
-                EditorGUILayout.Space(8f);
-                EditorGUILayout.LabelField(T("latestExportSummary", "Latest Export"), EditorStyles.boldLabel);
+                DrawSectionSeparator();
+                DrawSectionHeader(T("latestExportSummary", "Latest Export"));
                 if (_lastExportResult == null)
                 {
                     EditorGUILayout.LabelField(T("noExportResult", "No export result yet."), EditorStyles.miniLabel);
@@ -460,6 +459,7 @@ namespace Sunmax.GridAssetSlicer.Editor
 
                     EditorGUILayout.LabelField(T("bounds", "Bounds"), $"X:{rect.X} Y:{rect.Y} W:{rect.Width} H:{rect.Height}");
                     EditorGUILayout.LabelField(T("outputFile", "Output File"), BuildOutputFileName(rect.Coordinate));
+                    DrawSectionSeparator();
                     DrawInspectorPreviewSettings();
                     DrawSelectedPreview(rect);
                 }
@@ -691,15 +691,22 @@ namespace Sunmax.GridAssetSlicer.Editor
         {
             using (new EditorGUILayout.HorizontalScope(options))
             {
-                EditorGUILayout.LabelField(label, EditorStyles.boldLabel, GUILayout.Width(Mathf.Max(120f, EditorStyles.boldLabel.CalcSize(new GUIContent(label)).x + 8f)));
-                var rect = GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
-                if (Event.current.type == EventType.Repaint)
-                {
-                    EditorGUI.DrawRect(new Rect(rect.x, rect.y + 7f, rect.width, 1f), new Color(0.42f, 0.42f, 0.42f, 1f));
-                }
+                EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
             }
 
             EditorGUILayout.Space(4f);
+        }
+
+        private static void DrawSectionSeparator()
+        {
+            EditorGUILayout.Space(8f);
+            var rect = GUILayoutUtility.GetRect(1f, 1f, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(rect, new Color(0.42f, 0.42f, 0.42f, 1f));
+            }
+
+            EditorGUILayout.Space(8f);
         }
 
         private static void DrawPaneSeparator()
