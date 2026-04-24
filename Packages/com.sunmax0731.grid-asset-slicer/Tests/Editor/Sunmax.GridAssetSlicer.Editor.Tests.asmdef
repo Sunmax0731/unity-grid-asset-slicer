@@ -1,0 +1,21 @@
+{
+  "name": "Sunmax.GridAssetSlicer.Editor.Tests",
+  "rootNamespace": "Sunmax.GridAssetSlicer.Editor.Tests",
+  "references": [
+    "Sunmax.GridAssetSlicer.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "noEngineReferences": false
+}
