@@ -187,10 +187,6 @@ namespace Sunmax.GridAssetSlicer.Editor
 
                 DrawSectionSeparator();
                 DrawQualityCheckSettings();
-
-                DrawSectionSeparator();
-                DrawSectionHeader(T("display", "Display"));
-                EditorGUILayout.HelpBox(T("displayHelp", "The main window keeps settings and inspection controls visible. Use the separate preview window for the grid preview."), MessageType.Info);
             }
         }
 
@@ -425,11 +421,6 @@ namespace Sunmax.GridAssetSlicer.Editor
                     ("readableSource", "Readable Source", "help.readableSource", "Checks whether Unity can read source texture pixels for PNG export."),
                     ("outputSettings", "Output Settings", "help.outputSettings", "Checks whether export folder and file naming settings can produce valid output paths."),
                     ("includedCells", "Included Cells", "help.includedCells", "Checks whether at least one cell is still included for export.")
-                });
-                _owner.DrawHelpSection("display", "Display", new[]
-                {
-                    ("parameterHelp", "Parameter Help", "help.parameterHelp", "Shows parameter descriptions in a separate non-modal window."),
-                    ("inspectorPreviewSettings", "Preview Display", "help.inspectorPreview", "Controls the selected-cell preview background and outline in the inspector.")
                 });
                 EditorGUILayout.EndScrollView();
             }
