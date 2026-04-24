@@ -14,6 +14,8 @@ namespace Sunmax.GridAssetSlicer.Editor.Localization
             ["language.english"] = "英語",
             ["sourceImage"] = "元画像",
             ["preview"] = "プレビュー",
+            ["previewWindow"] = "別窓プレビュー",
+            ["detachedPreviewTitle"] = "グリッドプレビュー",
             ["export"] = "書き出し...",
             ["saveSession"] = "セッション保存",
             ["loadSession"] = "セッション読込",

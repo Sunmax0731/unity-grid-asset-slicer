@@ -47,6 +47,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         private Vector2 _reportScroll;
         private GridCalculationResult _lastGridResult = new GridCalculationResult(Array.Empty<CellRect>(), Array.Empty<string>());
         private PngExportResult _lastExportResult;
+        private DetachedPreviewWindow _detachedPreviewWindow;
         private QualityCheckSettings _qualityChecks;
         private GridAssetSlicerLanguageMode _languageMode = GridAssetSlicerLanguageMode.Auto;
         private GridAssetSlicerDisplayLanguage _displayLanguage = GridAssetSlicerDisplayLanguage.English;
@@ -104,6 +105,11 @@ namespace Sunmax.GridAssetSlicer.Editor
                     if (GUILayout.Button(T("preview", "Preview"), EditorStyles.toolbarButton, GUILayout.Width(90f)))
                     {
                         CalculatePreview();
+                    }
+
+                    if (GUILayout.Button(T("previewWindow", "Preview Window"), EditorStyles.toolbarButton, GUILayout.Width(120f)))
+                    {
+                        OpenDetachedPreviewWindow();
                     }
 
                     if (GUILayout.Button(T("export", "Export..."), EditorStyles.toolbarButton, GUILayout.Width(90f)))
@@ -270,39 +276,90 @@ namespace Sunmax.GridAssetSlicer.Editor
             {
                 var sourceName = _sourceTexture == null ? T("noSourceImage", "No source image") : $"{_sourceTexture.name} - {_sourceTexture.width}x{_sourceTexture.height}";
                 EditorGUILayout.LabelField(TFormat("previewTitle", "Preview ({0})", sourceName), EditorStyles.boldLabel);
-                CalculatePreview();
+                DrawPreviewContent(ref _previewScroll, 430f);
+            }
+        }
 
-                if (_sourceTexture == null)
+        private void DrawPreviewContent(ref Vector2 scroll, float maxHeight)
+        {
+            CalculatePreview();
+
+            if (_sourceTexture == null)
+            {
+                EditorGUILayout.HelpBox(T("selectSource", "Select a PNG texture asset to preview cells."), MessageType.Info);
+                return;
+            }
+
+            if (_lastGridResult.Errors.Count > 0)
+            {
+                foreach (var error in _lastGridResult.Errors)
                 {
-                    EditorGUILayout.HelpBox(T("selectSource", "Select a PNG texture asset to preview cells."), MessageType.Info);
+                    EditorGUILayout.HelpBox(error, MessageType.Warning);
+                }
+            }
+
+            if (_lastGridResult.Cells.Count == 0)
+            {
+                EditorGUILayout.HelpBox(T("noPreviewCells", "No preview cells can be drawn with the current settings."), MessageType.Info);
+                return;
+            }
+
+            var contentWidth = (_gridSettings.Columns * (CellSize + CellGap)) + CellGap;
+            var contentHeight = (_gridSettings.Rows * (CellSize + CellGap)) + CellGap;
+            var viewportHeight = Mathf.Min(maxHeight, contentHeight + 24f);
+            scroll = EditorGUILayout.BeginScrollView(scroll, GUI.skin.box, GUILayout.Height(viewportHeight), GUILayout.ExpandWidth(true));
+            var contentRect = GUILayoutUtility.GetRect(contentWidth, contentHeight);
+
+            foreach (var cell in _lastGridResult.Cells)
+            {
+                DrawPreviewCell(contentRect, cell);
+            }
+
+            EditorGUILayout.EndScrollView();
+        }
+
+        private void OpenDetachedPreviewWindow()
+        {
+            _detachedPreviewWindow = GetWindow<DetachedPreviewWindow>();
+            _detachedPreviewWindow.SetOwner(this);
+            _detachedPreviewWindow.Show();
+        }
+
+        private sealed class DetachedPreviewWindow : EditorWindow
+        {
+            private GridAssetSlicerWindow _owner;
+            private Vector2 _scroll;
+
+            public void SetOwner(GridAssetSlicerWindow owner)
+            {
+                _owner = owner;
+                titleContent = new GUIContent(owner.T("detachedPreviewTitle", "Grid Preview"));
+                minSize = new Vector2(360f, 260f);
+            }
+
+            private void OnGUI()
+            {
+                if (_owner == null)
+                {
+                    EditorGUILayout.HelpBox("Open Tools > Grid Asset Slicer again to reconnect the preview.", MessageType.Info);
                     return;
                 }
 
-                if (_lastGridResult.Errors.Count > 0)
+                var sourceName = _owner._sourceTexture == null
+                    ? _owner.T("noSourceImage", "No source image")
+                    : $"{_owner._sourceTexture.name} - {_owner._sourceTexture.width}x{_owner._sourceTexture.height}";
+                EditorGUILayout.LabelField(_owner.TFormat("previewTitle", "Preview ({0})", sourceName), EditorStyles.boldLabel);
+                _owner.DrawPreviewContent(ref _scroll, Mathf.Max(120f, position.height - 36f));
+
+                if (GUI.changed)
                 {
-                    foreach (var error in _lastGridResult.Errors)
-                    {
-                        EditorGUILayout.HelpBox(error, MessageType.Warning);
-                    }
+                    _owner.Repaint();
                 }
+            }
 
-                if (_lastGridResult.Cells.Count == 0)
-                {
-                    EditorGUILayout.HelpBox(T("noPreviewCells", "No preview cells can be drawn with the current settings."), MessageType.Info);
-                    return;
-                }
-
-                var contentWidth = (_gridSettings.Columns * (CellSize + CellGap)) + CellGap;
-                var contentHeight = (_gridSettings.Rows * (CellSize + CellGap)) + CellGap;
-                _previewScroll = EditorGUILayout.BeginScrollView(_previewScroll, GUI.skin.box, GUILayout.Height(Mathf.Min(430f, contentHeight + 24f)));
-                var contentRect = GUILayoutUtility.GetRect(contentWidth, contentHeight);
-
-                foreach (var cell in _lastGridResult.Cells)
-                {
-                    DrawPreviewCell(contentRect, cell);
-                }
-
-                EditorGUILayout.EndScrollView();
+            private void OnInspectorUpdate()
+            {
+                Repaint();
             }
         }
 

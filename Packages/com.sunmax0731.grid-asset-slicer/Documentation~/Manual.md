@@ -62,6 +62,7 @@ Validation warnings are shown when the grid is outside the source image, but pre
 ## Preview and Exclusion
 
 The preview uses the same grid calculation as export.
+Use `Preview Window` to open the same preview in a separate resizable window. The main tool window remains editable while the preview window is open.
 
 - Left-click: select a cell.
 - Right-click: toggle include / exclude.
