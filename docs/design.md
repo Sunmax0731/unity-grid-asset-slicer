@@ -157,6 +157,16 @@ IGridDetectionBackend
 
 初期実装は IMGUI または UI Toolkit のどちらでもよい。既存コードがないため、MVP では実装速度と安定性を優先する。
 
+UI 実装時は、画面イメージとして `docs/Image.png` を参照する。
+
+この画面イメージは以下の構成を示す。
+
+- 上部 toolbar: source image path、auto detect、preview、export、save session。
+- 左 pane: grid settings、output settings、display settings。
+- 中央 pane: indexed cell grid preview、excluded cell 表示、selected cell highlight、zoom controls。
+- 右 pane: cell inspector、metadata、selected cell preview、session info。
+- 下部 pane: quality check report table、warning filters、status。
+
 Window sections:
 
 - Source image
@@ -189,4 +199,3 @@ UI は service 呼び出しに徹し、grid math や file naming を直接持た
 8. Preview と cell selection
 9. Manual export end-to-end
 10. Optional auto-detection backend
-

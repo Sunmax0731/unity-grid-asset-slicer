@@ -32,6 +32,7 @@ Read these files before implementation:
 3. `docs/design.md`
 4. `docs/slice-session-schema.md`
 5. `docs/implementation-backlog.md`
+6. `docs/Image.png` when implementing Editor UI, preview, inspector, quality report, or workflow layout
 
 ## Recommended Work Order
 
@@ -90,6 +91,7 @@ Use English only where it is clearer as a literal identifier, such as code symbo
 - Use versioned JSON for session persistence.
 - Keep OpenCV and other image-analysis dependencies optional.
 - Avoid project-specific item, skill, or game catalog dependencies.
+- Use `docs/Image.png` as the visual reference for the Editor UI layout and interaction model. Match the workflow structure, but keep implementation scoped to each Issue.
 
 ## First Implementation Target
 
