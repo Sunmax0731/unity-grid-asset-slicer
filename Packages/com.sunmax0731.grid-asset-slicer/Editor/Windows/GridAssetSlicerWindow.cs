@@ -14,6 +14,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         private const float RightPaneWidth = 320f;
         private const float CellSize = 72f;
         private const float CellGap = 4f;
+        private const string QualityPrefsPrefix = "Sunmax.GridAssetSlicer.Quality.";
 
         private Texture2D _sourceTexture;
         private GridSettings _gridSettings = new GridSettings
@@ -43,6 +44,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         private Vector2 _reportScroll;
         private GridCalculationResult _lastGridResult = new GridCalculationResult(Array.Empty<CellRect>(), Array.Empty<string>());
         private PngExportResult _lastExportResult;
+        private QualityCheckSettings _qualityChecks;
         private string _statusMessage = "Ready.";
 
         [MenuItem("Tools/Grid Asset Slicer")]
@@ -56,6 +58,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         {
             titleContent = new GUIContent("Grid Asset Slicer");
             minSize = new Vector2(980, 620);
+            _qualityChecks = QualityCheckSettings.Load();
         }
 
         private void OnGUI()
@@ -151,8 +154,34 @@ namespace Sunmax.GridAssetSlicer.Editor
                 _exportSettings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup("Conflict Mode", _exportSettings.ConflictBehavior);
 
                 EditorGUILayout.Space(10f);
+                DrawQualityCheckSettings();
+
+                EditorGUILayout.Space(10f);
                 EditorGUILayout.LabelField("Display", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox("The preview layout follows docs/Image.png: settings on the left, grid in the center, inspector on the right, quality report below.", MessageType.Info);
+            }
+        }
+
+        private void DrawQualityCheckSettings()
+        {
+            EditorGUILayout.LabelField("Quality Checks", EditorStyles.boldLabel);
+            var nextGridBounds = EditorGUILayout.Toggle("Grid Bounds", _qualityChecks.GridBounds);
+            var nextReadableSource = EditorGUILayout.Toggle("Readable Source", _qualityChecks.ReadableSource);
+            var nextOutputSettings = EditorGUILayout.Toggle("Output Settings", _qualityChecks.OutputSettings);
+            var nextIncludedCells = EditorGUILayout.Toggle("Included Cells", _qualityChecks.IncludedCells);
+
+            if (nextGridBounds != _qualityChecks.GridBounds
+                || nextReadableSource != _qualityChecks.ReadableSource
+                || nextOutputSettings != _qualityChecks.OutputSettings
+                || nextIncludedCells != _qualityChecks.IncludedCells)
+            {
+                _qualityChecks = new QualityCheckSettings(
+                    nextGridBounds,
+                    nextReadableSource,
+                    nextOutputSettings,
+                    nextIncludedCells);
+                _qualityChecks.Save();
+                Repaint();
             }
         }
 
@@ -238,26 +267,28 @@ namespace Sunmax.GridAssetSlicer.Editor
             _reportScroll = EditorGUILayout.BeginScrollView(_reportScroll, GUI.skin.box, GUILayout.Height(110f));
             DrawReportHeader();
 
+            foreach (var check in BuildQualityReport())
+            {
+                DrawReportRow("-", check.Name, check.Status, check.Details);
+            }
+
             if (_lastExportResult != null)
             {
+                EditorGUILayout.Space(4f);
                 foreach (var exported in _lastExportResult.ExportedFiles)
                 {
-                    DrawReportRow(GetCellIndex(exported.Cell), exported.Cell, "Exported", exported.OutputPath);
+                    DrawReportRow(GetCellIndex(exported.Cell).ToString(), exported.Cell.ToString(), "Exported", exported.OutputPath);
                 }
 
                 foreach (var skipped in _lastExportResult.SkippedFiles)
                 {
-                    DrawReportRow(GetCellIndex(skipped.Cell), skipped.Cell, "Skipped", skipped.OutputPath);
+                    DrawReportRow(GetCellIndex(skipped.Cell).ToString(), skipped.Cell.ToString(), "Skipped", skipped.OutputPath);
                 }
 
                 foreach (var error in _lastExportResult.Errors)
                 {
-                    DrawReportRow(-1, new CellCoordinate(-1, -1), "Error", error);
+                    DrawReportRow("-", "-", "Error", error);
                 }
-            }
-            else
-            {
-                EditorGUILayout.LabelField("No export result yet.", EditorStyles.miniLabel);
             }
 
             EditorGUILayout.EndScrollView();
@@ -274,14 +305,68 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
         }
 
-        private static void DrawReportRow(int index, CellCoordinate cell, string status, string details)
+        private static void DrawReportRow(string index, string cell, string status, string details)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField(index >= 0 ? index.ToString() : "-", GUILayout.Width(60f));
-                EditorGUILayout.LabelField(cell.Row >= 0 ? cell.ToString() : "-", GUILayout.Width(90f));
+                EditorGUILayout.LabelField(index, GUILayout.Width(60f));
+                EditorGUILayout.LabelField(cell, GUILayout.Width(90f));
                 EditorGUILayout.LabelField(status, GUILayout.Width(90f));
                 EditorGUILayout.LabelField(details, EditorStyles.miniLabel);
+            }
+        }
+
+        private IReadOnlyList<QualityReportEntry> BuildQualityReport()
+        {
+            var entries = new List<QualityReportEntry>();
+
+            entries.Add(_qualityChecks.GridBounds
+                ? _lastGridResult.IsValid
+                    ? QualityReportEntry.Pass("Grid Bounds", "Grid fits inside the source image.")
+                    : QualityReportEntry.Fail("Grid Bounds", string.Join("; ", _lastGridResult.Errors))
+                : QualityReportEntry.Disabled("Grid Bounds"));
+
+            entries.Add(_qualityChecks.ReadableSource
+                ? IsSourceReadable()
+                    ? QualityReportEntry.Pass("Readable Source", "Source texture pixels can be read.")
+                    : QualityReportEntry.Fail("Readable Source", "Source texture is missing or not readable. Export may fail.")
+                : QualityReportEntry.Disabled("Readable Source"));
+
+            var outputErrors = ExportFileNameResolver.BuildPlan(
+                _exportSettings,
+                new[] { new CellCoordinate(0, 0) },
+                _ => false).Errors;
+            entries.Add(_qualityChecks.OutputSettings
+                ? outputErrors.Count == 0
+                    ? QualityReportEntry.Pass("Output Settings", "Output settings are valid.")
+                    : QualityReportEntry.Fail("Output Settings", string.Join("; ", outputErrors))
+                : QualityReportEntry.Disabled("Output Settings"));
+
+            var includedCount = _lastGridResult.Cells.Count(cell => !IsExcluded(cell.Coordinate));
+            entries.Add(_qualityChecks.IncludedCells
+                ? includedCount > 0
+                    ? QualityReportEntry.Pass("Included Cells", $"{includedCount} cell(s) included.")
+                    : QualityReportEntry.Fail("Included Cells", "No cells are included for export.")
+                : QualityReportEntry.Disabled("Included Cells"));
+
+            return entries;
+        }
+
+        private bool IsSourceReadable()
+        {
+            if (_sourceTexture == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                _sourceTexture.GetPixel(0, 0);
+                return true;
+            }
+            catch (UnityException)
+            {
+                return false;
             }
         }
 
@@ -529,6 +614,73 @@ namespace Sunmax.GridAssetSlicer.Editor
                 alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = Color.white }
             };
+        }
+
+        private readonly struct QualityReportEntry
+        {
+            private QualityReportEntry(string name, string status, string details)
+            {
+                Name = name;
+                Status = status;
+                Details = details;
+            }
+
+            public string Name { get; }
+
+            public string Status { get; }
+
+            public string Details { get; }
+
+            public static QualityReportEntry Pass(string name, string details)
+            {
+                return new QualityReportEntry(name, "Pass", details);
+            }
+
+            public static QualityReportEntry Fail(string name, string details)
+            {
+                return new QualityReportEntry(name, "Fail", details);
+            }
+
+            public static QualityReportEntry Disabled(string name)
+            {
+                return new QualityReportEntry(name, "Disabled", "This quality check is turned off.");
+            }
+        }
+
+        private readonly struct QualityCheckSettings
+        {
+            public QualityCheckSettings(bool gridBounds, bool readableSource, bool outputSettings, bool includedCells)
+            {
+                GridBounds = gridBounds;
+                ReadableSource = readableSource;
+                OutputSettings = outputSettings;
+                IncludedCells = includedCells;
+            }
+
+            public bool GridBounds { get; }
+
+            public bool ReadableSource { get; }
+
+            public bool OutputSettings { get; }
+
+            public bool IncludedCells { get; }
+
+            public static QualityCheckSettings Load()
+            {
+                return new QualityCheckSettings(
+                    EditorPrefs.GetBool(QualityPrefsPrefix + nameof(GridBounds), true),
+                    EditorPrefs.GetBool(QualityPrefsPrefix + nameof(ReadableSource), true),
+                    EditorPrefs.GetBool(QualityPrefsPrefix + nameof(OutputSettings), true),
+                    EditorPrefs.GetBool(QualityPrefsPrefix + nameof(IncludedCells), true));
+            }
+
+            public void Save()
+            {
+                EditorPrefs.SetBool(QualityPrefsPrefix + nameof(GridBounds), GridBounds);
+                EditorPrefs.SetBool(QualityPrefsPrefix + nameof(ReadableSource), ReadableSource);
+                EditorPrefs.SetBool(QualityPrefsPrefix + nameof(OutputSettings), OutputSettings);
+                EditorPrefs.SetBool(QualityPrefsPrefix + nameof(IncludedCells), IncludedCells);
+            }
         }
     }
 }
