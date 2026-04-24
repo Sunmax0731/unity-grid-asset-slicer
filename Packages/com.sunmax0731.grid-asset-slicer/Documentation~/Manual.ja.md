@@ -57,7 +57,7 @@ Tools > Grid Asset Slicer
 - `Gutter X / Y`: cell 間の隙間です。
 - `Cell Width / Height`: cell サイズを明示する場合に使います。未指定の場合は画像サイズ、margin、gutter、rows、columns から計算します。
 
-grid が画像範囲外になる場合や、cell サイズを計算できない場合は validation error が表示されます。
+grid が画像範囲外になる場合は validation warning を表示しますが、cell 矩形を計算できる場合は preview を表示します。rows / columns が無効な場合や、暗黙 cell サイズを計算できない場合など、cell 矩形を作れない設定のときだけ preview は表示されません。
 
 ## Preview と Cell 除外
 

@@ -101,7 +101,8 @@ namespace Sunmax.GridAssetSlicer.Editor.Tests
             var result = GridCalculator.Calculate(100, 64, settings);
 
             Assert.That(result.IsValid, Is.False);
-            Assert.That(result.Cells, Is.Empty);
+            Assert.That(result.Cells, Has.Count.EqualTo(6));
+            Assert.That(result.Cells[2], Is.EqualTo(new CellRect(new CellCoordinate(0, 2), 80, 0, 30, 16)));
             Assert.That(result.Errors.Any(error => error.Contains("Grid width exceeds image bounds")), Is.True);
         }
 

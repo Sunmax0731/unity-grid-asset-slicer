@@ -61,11 +61,6 @@ namespace Sunmax.GridAssetSlicer
                 errors.Add($"Grid height exceeds image bounds. Grid bottom={gridBottom}, allowed bottom={bottomLimit}.");
             }
 
-            if (errors.Count > 0)
-            {
-                return new GridCalculationResult(Array.Empty<CellRect>(), errors);
-            }
-
             var cells = new List<CellRect>(settings.Rows * settings.Columns);
             for (var row = 0; row < settings.Rows; row++)
             {
@@ -77,7 +72,7 @@ namespace Sunmax.GridAssetSlicer
                 }
             }
 
-            return new GridCalculationResult(cells, Array.Empty<string>());
+            return new GridCalculationResult(cells, errors);
         }
 
         private static GridCalculationResult Invalid(string error)

@@ -45,6 +45,7 @@ namespace Sunmax.GridAssetSlicer.Editor.Localization
             ["previewTitle"] = "プレビュー ({0})",
             ["noSourceImage"] = "元画像なし",
             ["selectSource"] = "プレビューするPNGテクスチャを選択してください。",
+            ["noPreviewCells"] = "現在の設定では描画できるプレビューセルがありません。",
             ["cellInspector"] = "セルインスペクタ",
             ["selectCell"] = "プレビュー内のセルを選択してください。",
             ["index"] = "番号",

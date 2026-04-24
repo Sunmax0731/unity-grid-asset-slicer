@@ -272,19 +272,23 @@ namespace Sunmax.GridAssetSlicer.Editor
                 EditorGUILayout.LabelField(TFormat("previewTitle", "Preview ({0})", sourceName), EditorStyles.boldLabel);
                 CalculatePreview();
 
+                if (_sourceTexture == null)
+                {
+                    EditorGUILayout.HelpBox(T("selectSource", "Select a PNG texture asset to preview cells."), MessageType.Info);
+                    return;
+                }
+
                 if (_lastGridResult.Errors.Count > 0)
                 {
                     foreach (var error in _lastGridResult.Errors)
                     {
-                        EditorGUILayout.HelpBox(error, MessageType.Error);
+                        EditorGUILayout.HelpBox(error, MessageType.Warning);
                     }
-
-                    return;
                 }
 
-                if (_sourceTexture == null)
+                if (_lastGridResult.Cells.Count == 0)
                 {
-                    EditorGUILayout.HelpBox(T("selectSource", "Select a PNG texture asset to preview cells."), MessageType.Info);
+                    EditorGUILayout.HelpBox(T("noPreviewCells", "No preview cells can be drawn with the current settings."), MessageType.Info);
                     return;
                 }
 

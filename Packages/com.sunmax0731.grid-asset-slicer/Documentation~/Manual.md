@@ -57,7 +57,7 @@ Tools > Grid Asset Slicer
 - `Gutter X / Y`: pixel spacing between cells.
 - `Cell Width / Height`: explicit cell size. If omitted, the size is calculated from the source image, margins, gutters, rows, and columns.
 
-Validation errors are shown when the grid is outside the source image or the implicit cell size cannot be calculated.
+Validation warnings are shown when the grid is outside the source image, but preview remains visible when cell rectangles can still be calculated. Preview is unavailable only when the settings cannot produce any cell rectangles, such as invalid row or column counts or unresolved implicit cell sizes.
 
 ## Preview and Exclusion
 
