@@ -20,15 +20,19 @@ GitHub Release と BOOTH 配布物は同一内容です。
 
 ## v0.1.0 の主な機能
 
-- `Tools > Grid Asset Slicer` から起動する Editor window
+- `Tools > Grid Asset Slicer > Open` から起動する Editor window
 - source PNG selection
 - rows / columns / margins / gutters / explicit cell size の grid setup
-- export と同じ cell rectangles を使う preview
+- export と同じ cell rectangles を使う別ウィンドウ preview
 - cell selection
 - 右クリックによる include / exclude 切り替え
 - PNG export
 - export file prefix / start index / number padding の指定
 - 既存ファイル衝突時の `Overwrite` / `Skip` / `Duplicate`
+- 品質チェック項目の ON / OFF と quality report
+- 日本語 / 英語の表示言語切り替え
+- 別ウィンドウの parameter help
+- Read/Write 無効な source texture の一時読み取り可能コピー処理
 - session JSON save / load
 - sample PNGs and replay fixtures
 - validation script: `tools/validation/run-editmode-tests.ps1`

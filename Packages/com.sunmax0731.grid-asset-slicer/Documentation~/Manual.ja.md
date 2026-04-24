@@ -45,7 +45,7 @@ Tools > Grid Asset Slicer > Open
 4. `Preview` を押し、別ウィンドウの preview で cell 分割を確認します。
 5. 出力しない cell は右クリックで excluded にします。
 6. `Output Folder`、`File Prefix`、`Start Index`、`Number Padding`、`Conflict` を設定します。
-7. `Export PNGs` を実行します。
+7. `Export...` を実行します。
 8. 必要に応じて `Save Session` で設定を JSON に保存します。
 
 ## Grid 設定

@@ -14,15 +14,21 @@
 
 ## 主な機能
 
-- `Tools > Grid Asset Slicer` から起動する Unity Editor window
+- `Tools > Grid Asset Slicer > Open` から起動する Unity Editor window
 - source PNG の選択
 - rows / columns / margins / gutters / cell width / cell height の設定
 - export と同じ grid calculation を使った preview
+- 可変サイズの別ウィンドウ preview
 - cell の選択
 - 右クリックによる include / exclude 切り替え
 - PNG export
 - 出力ファイル名の prefix、開始番号、ゼロ埋め桁数の指定
 - 既存ファイル衝突時の `Overwrite` / `Skip` / `Duplicate` 対応
+- 品質チェック項目の ON / OFF
+- quality report と書き出し結果の確認
+- 日本語 / 英語の表示言語切り替え
+- 別ウィンドウの parameter help
+- Read/Write 無効な source texture の一時読み取り可能コピー処理
 - session JSON の保存 / 読み込み
 - sample PNG と replay 用 session JSON
 - EditMode test 用 validation script

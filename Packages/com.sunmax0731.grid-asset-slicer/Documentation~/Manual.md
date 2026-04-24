@@ -45,7 +45,7 @@ Tools > Grid Asset Slicer > Open
 4. Click `Preview` and check the generated cells in the separate preview window.
 5. Right-click cells that should be excluded.
 6. Set `Output Folder`, `File Prefix`, `Start Index`, `Number Padding`, and `Conflict`.
-7. Run `Export PNGs`.
+7. Click `Export...`.
 8. Use `Save Session` when the setup should be replayed later.
 
 ## Grid Settings
