@@ -1,84 +1,38 @@
 # Unity Grid Asset Slicer
 
-Unity Grid Asset Slicer は、1枚のグリッド画像から複数の画像アセットを切り出す Unity Editor 拡張です。
+Unity Grid Asset Slicer は、1枚のグリッド画像から複数の PNG アセットを切り出す Unity Editor 拡張です。
 
-ChatGPT Image2 などの画像生成ツールで作成した、アイコンやアイテム画像が格子状に並んだ画像を、Unity プロジェクト内で使いやすい個別 PNG アセットへ変換することを目的とします。
+主な対象は、画像生成ツールなどで作成したアイコンシート、スキル画像、UI アイコン、ポートレートなどです。ユーザーはグリッドを手動指定または将来的には自動検出し、セル単位でプレビュー、採用・除外、PNG 出力、再現用 JSON 保存を行えます。
 
-## Target
+## 現状
 
-- Unity 6000.0 以降
-- Windows 優先対応
-- UPM Git package 配布
-- オフライン動作
-- PNG 入力、PNG 出力
+- Unity project: Unity 6000.3.13f1
+- Repository: `D:\Claude\UnityEditor-Dev\unity-grid-asset-slicer`
+- Product name: Unity Grid Asset Slicer
+- Version: 0.1.0
+- Current implementation state: Unity テンプレート + 設計ドキュメント
+- Delivery target: UPM Git package として導入できる Unity Editor 拡張
 
-## Features
+## ドキュメント
 
-- グリッド画像からセル単位で個別 PNG を出力
-- 行数、列数、余白、境界幅を数値指定
-- OpenCV backend による余白・境界の自動推定
-- セル preview
-- セル単位の採用 / 除外
-- 元セルサイズを維持した出力
-- 桁数固定の連番ファイル名
-- overwrite / skip / duplicate の衝突処理
-- JSON metadata による再現可能な slice session 保存
-- 品質チェック
-  - 空白セル
-  - 低解像度
-  - ほぼ単色
-  - 透明領域不足
-  - 余白過多
-  - 重複・類似セル
-  - 出力失敗
+- [要件定義](docs/requirements.md)
+- [設計書](docs/design.md)
+- [Slice Session JSON 仕様](docs/slice-session-schema.md)
+- [実装バックログ](docs/implementation-backlog.md)
+- [検証計画](docs/validation-plan.md)
+- [リリース計画](docs/release-plan.md)
+- [AI Agents Guide](Agents.md)
+- [Project Skill](Skill.md)
 
-## Package Name
+## MVP
 
-```json
-{
-  "name": "com.sunmax0731.grid-asset-slicer"
-}
-```
+1. `Tools > Grid Asset Slicer` から Editor Window を開く。
+2. PNG ソース画像を選択する。
+3. 行数、列数、margin、gutter、出力設定を指定する。
+4. 切り出し予定セルを preview する。
+5. セル単位で採用・除外を切り替える。
+6. 選択セルを個別 PNG として出力する。
+7. slice session JSON を保存する。
+8. JSON を読み込み、同条件で再実行できる。
 
-## OpenCV Dependency
-
-画像処理は別 UPM package として導入する OpenCV backend を利用します。
-
-この package 自体は外部 API やクラウド処理に依存せず、Unity Editor 内でオフライン処理を完結させます。
-
-## Basic Workflow
-
-1. `Tools > Grid Asset Slicer` を開く
-2. source PNG を選択する
-3. 行数、列数、margin、gutter を指定する
-4. 必要に応じて `Auto Detect` で余白・境界を推定する
-5. preview でセル単位の結果を確認する
-6. 採用しないセルを除外する
-7. 出力先、prefix、連番桁数、衝突処理を設定する
-8. `Export` で個別 PNG を生成する
-9. session JSON を保存し、同条件で再実行できるようにする
-
-## Output Example
-
-```text
-Assets/Generated/GridSlicer/items/
-  item_001.png
-  item_002.png
-  item_003.png
-  slice-session.json
-```
-
-## Development Guides
-
-このリポジトリは `D:\Claude\UnityEditor-Dev\workspace-guides` の Unity Editor 拡張向け共通ガイドに従って開発します。
-
-今回の初期開発で参照するスキルは `docs/development-skills.md` にまとめています。
-
-## Future Scope
-
-- GUI 上でのドラッグ補正
-- CSV / JSON による出力名マッピング
-- SpriteAtlas 連携
-- Unity Addressables 連携
-- プロジェクト別 adapter
-- item / skill / UI / portrait などの preset
+OpenCV による自動検出は、手動グリッド、永続化、PNG 出力が安定した後の追加機能として扱います。
