@@ -43,7 +43,6 @@ namespace Sunmax.GridAssetSlicer.Editor
 
         private SliceSelection _selection = new SliceSelection();
         private CellCoordinate? _selectedCell;
-        private Vector2 _previewScroll;
         private Vector2 _reportScroll;
         private GridCalculationResult _lastGridResult = new GridCalculationResult(Array.Empty<CellRect>(), Array.Empty<string>());
         private PngExportResult _lastExportResult;
@@ -97,17 +96,14 @@ namespace Sunmax.GridAssetSlicer.Editor
                 {
                     _sourceTexture = nextTexture;
                     _selectedCell = null;
-                    _statusMessage = _sourceTexture == null ? "Source image cleared." : $"Source image selected: {AssetDatabase.GetAssetPath(_sourceTexture)}";
+                    _statusMessage = _sourceTexture == null
+                        ? T("status.sourceCleared", "Source image cleared.")
+                        : TFormat("status.sourceSelected", "Source image selected: {0}", AssetDatabase.GetAssetPath(_sourceTexture));
                 }
 
                 using (new EditorGUI.DisabledScope(_sourceTexture == null))
                 {
                     if (GUILayout.Button(T("preview", "Preview"), EditorStyles.toolbarButton, GUILayout.Width(90f)))
-                    {
-                        CalculatePreview();
-                    }
-
-                    if (GUILayout.Button(T("previewWindow", "Preview Window"), EditorStyles.toolbarButton, GUILayout.Width(120f)))
                     {
                         OpenDetachedPreviewWindow();
                     }
@@ -219,7 +215,7 @@ namespace Sunmax.GridAssetSlicer.Editor
                 }
 
                 DrawParameterHelp("help.parameterHelp", "Shows inline parameter descriptions without blocking edits or preview interaction.");
-                EditorGUILayout.HelpBox(T("displayHelp", "The preview layout follows docs/Image.png: settings on the left, grid in the center, inspector on the right, quality report below."), MessageType.Info);
+                EditorGUILayout.HelpBox(T("displayHelp", "The main window keeps settings and inspection controls visible. Use the separate preview window for the grid preview."), MessageType.Info);
             }
         }
 
@@ -276,7 +272,24 @@ namespace Sunmax.GridAssetSlicer.Editor
             {
                 var sourceName = _sourceTexture == null ? T("noSourceImage", "No source image") : $"{_sourceTexture.name} - {_sourceTexture.width}x{_sourceTexture.height}";
                 EditorGUILayout.LabelField(TFormat("previewTitle", "Preview ({0})", sourceName), EditorStyles.boldLabel);
-                DrawPreviewContent(ref _previewScroll, 430f);
+                CalculatePreview();
+
+                EditorGUILayout.HelpBox(T("detachedPreviewHelp", "Preview is shown in a separate resizable window. Open it to inspect cells while editing settings here."), MessageType.Info);
+                using (new EditorGUI.DisabledScope(_sourceTexture == null))
+                {
+                    if (GUILayout.Button(T("openPreviewWindow", "Open Preview Window"), GUILayout.Width(180f)))
+                    {
+                        OpenDetachedPreviewWindow();
+                    }
+                }
+
+                if (_sourceTexture != null && _lastGridResult.Errors.Count > 0)
+                {
+                    foreach (var error in _lastGridResult.Errors)
+                    {
+                        EditorGUILayout.HelpBox(LocalizeMessage(error), MessageType.Warning);
+                    }
+                }
             }
         }
 
@@ -294,7 +307,7 @@ namespace Sunmax.GridAssetSlicer.Editor
             {
                 foreach (var error in _lastGridResult.Errors)
                 {
-                    EditorGUILayout.HelpBox(error, MessageType.Warning);
+                    EditorGUILayout.HelpBox(LocalizeMessage(error), MessageType.Warning);
                 }
             }
 
@@ -341,7 +354,8 @@ namespace Sunmax.GridAssetSlicer.Editor
             {
                 if (_owner == null)
                 {
-                    EditorGUILayout.HelpBox("Open Tools > Grid Asset Slicer again to reconnect the preview.", MessageType.Info);
+                    var language = GridAssetSlicerLocalization.ResolveLanguage(GridAssetSlicerLanguageMode.Auto);
+                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedPreviewReconnect", "Open Tools > Grid Asset Slicer again to reconnect the preview."), MessageType.Info);
                     return;
                 }
 
@@ -377,7 +391,7 @@ namespace Sunmax.GridAssetSlicer.Editor
                 {
                     var rect = selectedRect.Value;
                     EditorGUILayout.LabelField(T("index", "Index"), GetCellIndex(rect.Coordinate).ToString());
-                    EditorGUILayout.LabelField(T("coordinate", "Coordinate"), $"Row {rect.Coordinate.Row}, Column {rect.Coordinate.Column}");
+                    EditorGUILayout.LabelField(T("coordinate", "Coordinate"), TFormat("coordinateValue", "Row {0}, Column {1}", rect.Coordinate.Row, rect.Coordinate.Column));
                     var included = !IsExcluded(rect.Coordinate);
                     var nextIncluded = EditorGUILayout.Toggle(T("include", "Include"), included);
                     if (nextIncluded != included)
@@ -427,7 +441,7 @@ namespace Sunmax.GridAssetSlicer.Editor
 
                 foreach (var error in _lastExportResult.Errors)
                 {
-                    DrawReportRow("-", "-", T("error", "Error"), error);
+                    DrawReportRow("-", "-", T("error", "Error"), LocalizeMessage(error));
                 }
             }
 
@@ -463,7 +477,7 @@ namespace Sunmax.GridAssetSlicer.Editor
             entries.Add(_qualityChecks.GridBounds
                 ? _lastGridResult.IsValid
                     ? QualityReportEntry.Pass(T("gridBounds", "Grid Bounds"), T("quality.grid.pass", "Grid fits inside the source image."))
-                    : QualityReportEntry.Fail(T("gridBounds", "Grid Bounds"), string.Join("; ", _lastGridResult.Errors))
+                    : QualityReportEntry.Fail(T("gridBounds", "Grid Bounds"), LocalizeMessages(_lastGridResult.Errors))
                 : QualityReportEntry.Disabled(T("gridBounds", "Grid Bounds"), T("quality.disabled", "This quality check is turned off.")));
 
             entries.Add(_qualityChecks.ReadableSource
@@ -479,7 +493,7 @@ namespace Sunmax.GridAssetSlicer.Editor
             entries.Add(_qualityChecks.OutputSettings
                 ? outputErrors.Count == 0
                     ? QualityReportEntry.Pass(T("outputSettings", "Output Settings"), T("quality.output.pass", "Output settings are valid."))
-                    : QualityReportEntry.Fail(T("outputSettings", "Output Settings"), string.Join("; ", outputErrors))
+                    : QualityReportEntry.Fail(T("outputSettings", "Output Settings"), LocalizeMessages(outputErrors))
                 : QualityReportEntry.Disabled(T("outputSettings", "Output Settings"), T("quality.disabled", "This quality check is turned off.")));
 
             var includedCount = _lastGridResult.Cells.Count(cell => !IsExcluded(cell.Coordinate));
@@ -586,9 +600,9 @@ namespace Sunmax.GridAssetSlicer.Editor
         private void ExportCells()
         {
             CalculatePreview();
-            if (!_lastGridResult.IsValid)
+            if (_lastGridResult.Cells.Count == 0)
             {
-                _statusMessage = "Export blocked by invalid grid settings.";
+                _statusMessage = T("status.exportNoCells", "Export blocked because no cells can be calculated.");
                 return;
             }
 
@@ -596,19 +610,19 @@ namespace Sunmax.GridAssetSlicer.Editor
             _lastExportResult = result;
             AssetDatabaseExportRefresher.RefreshIfExportedUnderAssets(result);
             _statusMessage = result.IsSuccess
-                ? $"Exported {result.ExportedFiles.Count}, skipped {result.SkippedFiles.Count}."
-                : $"Export failed with {result.Errors.Count} error(s).";
+                ? TFormat("status.exported", "Exported {0}, skipped {1}.", result.ExportedFiles.Count, result.SkippedFiles.Count)
+                : TFormat("status.exportFailed", "Export completed with {0} error(s).", result.Errors.Count);
         }
 
         private void SaveSession()
         {
             if (_sourceTexture == null)
             {
-                _statusMessage = "Select a source image before saving a session.";
+                _statusMessage = T("status.selectSourceBeforeSave", "Select a source image before saving a session.");
                 return;
             }
 
-            var path = EditorUtility.SaveFilePanelInProject("Save Slice Session", "slice-session", "json", "Save slice session JSON.");
+            var path = EditorUtility.SaveFilePanelInProject(T("dialog.saveSessionTitle", "Save Slice Session"), "slice-session", "json", T("dialog.saveSessionMessage", "Save slice session JSON."));
             if (string.IsNullOrWhiteSpace(path))
             {
                 return;
@@ -617,7 +631,7 @@ namespace Sunmax.GridAssetSlicer.Editor
             var session = CreateSession();
             File.WriteAllText(path, SliceSessionSerializer.ToJson(session));
             AssetDatabase.Refresh();
-            _statusMessage = $"Saved session: {path}";
+            _statusMessage = TFormat("status.savedSession", "Saved session: {0}", path);
         }
 
         private void LoadSession()
@@ -631,12 +645,12 @@ namespace Sunmax.GridAssetSlicer.Editor
             var result = SliceSessionSerializer.FromJson(File.ReadAllText(absolutePath));
             if (!result.IsValid)
             {
-                _statusMessage = $"Session load failed: {string.Join("; ", result.Errors)}";
+                _statusMessage = TFormat("status.sessionLoadFailed", "Session load failed: {0}", LocalizeMessages(result.Errors));
                 return;
             }
 
             ApplySession(result.Session);
-            _statusMessage = $"Loaded session: {ToProjectRelativePath(absolutePath)}";
+            _statusMessage = TFormat("status.loadedSession", "Loaded session: {0}", ToProjectRelativePath(absolutePath));
         }
 
         private GridSliceSession CreateSession()
@@ -769,6 +783,133 @@ namespace Sunmax.GridAssetSlicer.Editor
                 default:
                     return status;
             }
+        }
+
+        private string LocalizeMessages(IEnumerable<string> messages)
+        {
+            return string.Join("; ", messages.Select(LocalizeMessage));
+        }
+
+        private string LocalizeMessage(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return message;
+            }
+
+            switch (message)
+            {
+                case "Grid settings are required.":
+                    return T("error.gridSettingsRequired", "Grid settings are required.");
+                case "Image width must be greater than zero.":
+                    return T("error.imageWidthPositive", "Image width must be greater than zero.");
+                case "Image height must be greater than zero.":
+                    return T("error.imageHeightPositive", "Image height must be greater than zero.");
+                case "Rows must be greater than zero.":
+                    return T("error.rowsPositive", "Rows must be greater than zero.");
+                case "Columns must be greater than zero.":
+                    return T("error.columnsPositive", "Columns must be greater than zero.");
+                case "CellWidth must be greater than zero when specified.":
+                    return T("error.cellWidthPositive", "Cell Width must be greater than zero when specified.");
+                case "CellHeight must be greater than zero when specified.":
+                    return T("error.cellHeightPositive", "Cell Height must be greater than zero when specified.");
+                case "Available grid width must be greater than zero.":
+                    return T("error.availableWidthPositive", "Available grid width must be greater than zero.");
+                case "Available grid height must be greater than zero.":
+                    return T("error.availableHeightPositive", "Available grid height must be greater than zero.");
+                case "Available grid width is not evenly divisible by the cell count.":
+                    return T("error.availableWidthDivisible", "Available grid width is not evenly divisible by the cell count.");
+                case "Available grid height is not evenly divisible by the cell count.":
+                    return T("error.availableHeightDivisible", "Available grid height is not evenly divisible by the cell count.");
+                case "OutputFolder is required.":
+                    return T("error.outputFolderRequired", "Output Folder is required.");
+                case "StartIndex must be zero or greater.":
+                    return T("error.startIndexNonNegative", "Start Index must be zero or greater.");
+                case "NumberPadding must be zero or greater.":
+                    return T("error.numberPaddingNonNegative", "Serial Digits must be zero or greater.");
+                case "PNG export request is required.":
+                    return T("error.exportRequestRequired", "PNG export request is required.");
+                case "Source texture is required.":
+                    return T("error.sourceTextureRequired", "Source texture is required.");
+            }
+
+            if (message.EndsWith(" must be zero or greater.", StringComparison.Ordinal))
+            {
+                var fieldName = message.Substring(0, message.Length - " must be zero or greater.".Length);
+                return TFormat("error.fieldNonNegative", "{0} must be zero or greater.", LocalizeFieldName(fieldName));
+            }
+
+            if (message.StartsWith("Grid width exceeds image bounds.", StringComparison.Ordinal))
+            {
+                return T("error.gridWidthExceeds", "Grid width exceeds image bounds.");
+            }
+
+            if (message.StartsWith("Grid height exceeds image bounds.", StringComparison.Ordinal))
+            {
+                return T("error.gridHeightExceeds", "Grid height exceeds image bounds.");
+            }
+
+            if (message.StartsWith("Export was blocked for cell ", StringComparison.Ordinal))
+            {
+                var cell = ExtractBetween(message, "Export was blocked for cell ", " at ");
+                return TFormat("error.exportBlockedCell", "Export was blocked for cell {0}.", cell);
+            }
+
+            if (message.StartsWith("Cell ", StringComparison.Ordinal) && message.Contains(" was not found in the export cell list."))
+            {
+                var cell = ExtractBetween(message, "Cell ", " was not found");
+                return TFormat("error.cellNotFound", "Cell {0} was not found in the export cell list.", cell);
+            }
+
+            if (message.StartsWith("Failed to export cell ", StringComparison.Ordinal))
+            {
+                var cell = ExtractBetween(message, "Failed to export cell ", " to ");
+                var path = ExtractBetween(message, " to ", ": ");
+                return TFormat("error.failedToExportCell", "Failed to export cell {0} to {1}.", cell, path);
+            }
+
+            if (message.StartsWith("source.", StringComparison.Ordinal)
+                || message.StartsWith("export.", StringComparison.Ordinal)
+                || message.StartsWith("Unsupported formatVersion:", StringComparison.Ordinal))
+            {
+                return TFormat("error.sessionValidation", "Session validation failed. {0}", message);
+            }
+
+            return message;
+        }
+
+        private string LocalizeFieldName(string fieldName)
+        {
+            switch (fieldName)
+            {
+                case nameof(GridSettings.MarginLeft):
+                    return T("marginLeft", "Margin Left");
+                case nameof(GridSettings.MarginTop):
+                    return T("marginTop", "Margin Top");
+                case nameof(GridSettings.MarginRight):
+                    return T("marginRight", "Margin Right");
+                case nameof(GridSettings.MarginBottom):
+                    return T("marginBottom", "Margin Bottom");
+                case nameof(GridSettings.GutterX):
+                    return T("gutterX", "Gutter X");
+                case nameof(GridSettings.GutterY):
+                    return T("gutterY", "Gutter Y");
+                default:
+                    return fieldName;
+            }
+        }
+
+        private static string ExtractBetween(string text, string prefix, string suffix)
+        {
+            var start = text.IndexOf(prefix, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                return text;
+            }
+
+            start += prefix.Length;
+            var end = text.IndexOf(suffix, start, StringComparison.Ordinal);
+            return end < 0 ? text.Substring(start) : text.Substring(start, end - start);
         }
 
         private string T(string key, string englishText)

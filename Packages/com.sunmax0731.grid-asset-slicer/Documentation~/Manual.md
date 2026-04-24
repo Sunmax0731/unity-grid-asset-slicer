@@ -42,7 +42,7 @@ Tools > Grid Asset Slicer
 1. Assign a PNG texture to `Source Image`.
 2. Enter `Rows` and `Columns`.
 3. Set margins, gutters, cell width, and cell height as needed.
-4. Check the generated cells in the preview.
+4. Click `Preview` and check the generated cells in the separate preview window.
 5. Right-click cells that should be excluded.
 6. Set `Output Folder`, `File Prefix`, `Start Index`, `Number Padding`, and `Conflict`.
 7. Run `Export PNGs`.
@@ -62,7 +62,7 @@ Validation warnings are shown when the grid is outside the source image, but pre
 ## Preview and Exclusion
 
 The preview uses the same grid calculation as export.
-Use `Preview Window` to open the same preview in a separate resizable window. The main tool window remains editable while the preview window is open.
+Click `Preview` to open the preview in a separate resizable window. The main tool window does not draw the grid directly and remains editable while the preview window is open.
 
 - Left-click: select a cell.
 - Right-click: toggle include / exclude.
