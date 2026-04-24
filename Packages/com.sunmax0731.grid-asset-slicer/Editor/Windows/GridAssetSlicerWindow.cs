@@ -17,7 +17,7 @@ namespace Sunmax.GridAssetSlicer.Editor
         private const float CellGap = 4f;
         private const string QualityPrefsPrefix = "Sunmax.GridAssetSlicer.Quality.";
         private const string LanguageModePrefsKey = "Sunmax.GridAssetSlicer.LanguageMode";
-        private const string ParameterHelpPrefsKey = "Sunmax.GridAssetSlicer.ParameterHelp";
+        private const string InspectorOutlinePrefsKey = "Sunmax.GridAssetSlicer.InspectorOutline";
 
         private Texture2D _sourceTexture;
         private GridSettings _gridSettings = new GridSettings
@@ -47,10 +47,13 @@ namespace Sunmax.GridAssetSlicer.Editor
         private GridCalculationResult _lastGridResult = new GridCalculationResult(Array.Empty<CellRect>(), Array.Empty<string>());
         private PngExportResult _lastExportResult;
         private DetachedPreviewWindow _detachedPreviewWindow;
+        private ParameterHelpWindow _parameterHelpWindow;
         private QualityCheckSettings _qualityChecks;
         private GridAssetSlicerLanguageMode _languageMode = GridAssetSlicerLanguageMode.Auto;
         private GridAssetSlicerDisplayLanguage _displayLanguage = GridAssetSlicerDisplayLanguage.English;
-        private bool _showParameterHelp;
+        private bool _showInspectorPreviewOutline = true;
+        private Color _inspectorPreviewBackground = new Color(0.18f, 0.18f, 0.18f, 1f);
+        private Color _inspectorPreviewOutlineColor = Color.cyan;
         private string _statusMessage = "Ready.";
 
         [MenuItem("Tools/Grid Asset Slicer")]
@@ -67,13 +70,12 @@ namespace Sunmax.GridAssetSlicer.Editor
             _qualityChecks = QualityCheckSettings.Load();
             _languageMode = LoadLanguageMode();
             _displayLanguage = GridAssetSlicerLocalization.ResolveLanguage(_languageMode);
-            _showParameterHelp = EditorPrefs.GetBool(ParameterHelpPrefsKey, false);
+            _showInspectorPreviewOutline = EditorPrefs.GetBool(InspectorOutlinePrefsKey, true);
         }
 
         private void OnGUI()
         {
             DrawToolbar();
-            DrawToolbarHelp();
             EditorGUILayout.Space(6f);
 
             using (new EditorGUILayout.HorizontalScope())
@@ -157,25 +159,15 @@ namespace Sunmax.GridAssetSlicer.Editor
             {
                 EditorGUILayout.LabelField(T("gridSettings", "Grid Settings"), EditorStyles.boldLabel);
                 _gridSettings.Rows = EditorGUILayout.IntField(T("rows", "Rows"), _gridSettings.Rows);
-                DrawParameterHelp("help.rows", "Vertical cell count in the source image.");
                 _gridSettings.Columns = EditorGUILayout.IntField(T("columns", "Columns"), _gridSettings.Columns);
-                DrawParameterHelp("help.columns", "Horizontal cell count in the source image.");
                 _gridSettings.MarginLeft = EditorGUILayout.IntField(T("marginLeft", "Margin Left"), _gridSettings.MarginLeft);
-                DrawParameterHelp("help.marginLeft", "Pixels to skip from the left edge before the grid starts.");
                 _gridSettings.MarginTop = EditorGUILayout.IntField(T("marginTop", "Margin Top"), _gridSettings.MarginTop);
-                DrawParameterHelp("help.marginTop", "Pixels to skip from the top edge before the grid starts.");
                 _gridSettings.MarginRight = EditorGUILayout.IntField(T("marginRight", "Margin Right"), _gridSettings.MarginRight);
-                DrawParameterHelp("help.marginRight", "Pixels excluded from the right edge after the grid ends.");
                 _gridSettings.MarginBottom = EditorGUILayout.IntField(T("marginBottom", "Margin Bottom"), _gridSettings.MarginBottom);
-                DrawParameterHelp("help.marginBottom", "Pixels excluded from the bottom edge after the grid ends.");
                 _gridSettings.GutterX = EditorGUILayout.IntField(T("gutterX", "Gutter X"), _gridSettings.GutterX);
-                DrawParameterHelp("help.gutterX", "Horizontal pixel spacing between neighboring cells.");
                 _gridSettings.GutterY = EditorGUILayout.IntField(T("gutterY", "Gutter Y"), _gridSettings.GutterY);
-                DrawParameterHelp("help.gutterY", "Vertical pixel spacing between neighboring cells.");
                 _gridSettings.CellWidth = DrawNullableInt(T("cellWidth", "Cell Width"), _gridSettings.CellWidth);
-                DrawParameterHelp("help.cellWidth", "Explicit cell width. Turn it off to calculate width from the source image, margins, gutters, and column count.");
                 _gridSettings.CellHeight = DrawNullableInt(T("cellHeight", "Cell Height"), _gridSettings.CellHeight);
-                DrawParameterHelp("help.cellHeight", "Explicit cell height. Turn it off to calculate height from the source image, margins, gutters, and row count.");
 
                 EditorGUILayout.Space(10f);
                 EditorGUILayout.LabelField(T("output", "Output"), EditorStyles.boldLabel);
@@ -191,30 +183,22 @@ namespace Sunmax.GridAssetSlicer.Editor
                         }
                     }
                 }
-                DrawParameterHelp("help.outputFolder", "Project-relative folder where generated PNG files are written.");
 
                 _exportSettings.FilePrefix = EditorGUILayout.TextField(T("outputPrefix", "Output Prefix"), _exportSettings.FilePrefix);
-                DrawParameterHelp("help.outputPrefix", "Prefix used before the serial number in each generated file name.");
                 _exportSettings.StartIndex = EditorGUILayout.IntField(T("startIndex", "Start Index"), _exportSettings.StartIndex);
-                DrawParameterHelp("help.startIndex", "First serial number used when naming exported cells.");
                 _exportSettings.NumberPadding = EditorGUILayout.IntField(T("serialDigits", "Serial Digits"), _exportSettings.NumberPadding);
-                DrawParameterHelp("help.serialDigits", "Minimum digit count for serial numbers. For example, 3 produces 001.");
                 _exportSettings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup(T("conflictMode", "Conflict Mode"), _exportSettings.ConflictBehavior);
-                DrawParameterHelp("help.conflictMode", "Select how export behaves when a target file already exists: overwrite, skip, or create a duplicate name.");
 
                 EditorGUILayout.Space(10f);
                 DrawQualityCheckSettings();
 
                 EditorGUILayout.Space(10f);
                 EditorGUILayout.LabelField(T("display", "Display"), EditorStyles.boldLabel);
-                var nextShowHelp = EditorGUILayout.Toggle(T("parameterHelp", "Parameter Help"), _showParameterHelp);
-                if (nextShowHelp != _showParameterHelp)
+                if (GUILayout.Button(T("openHelpWindow", "Open Help Window")))
                 {
-                    _showParameterHelp = nextShowHelp;
-                    EditorPrefs.SetBool(ParameterHelpPrefsKey, _showParameterHelp);
+                    OpenParameterHelpWindow();
                 }
 
-                DrawParameterHelp("help.parameterHelp", "Shows inline parameter descriptions without blocking edits or preview interaction.");
                 EditorGUILayout.HelpBox(T("displayHelp", "The main window keeps settings and inspection controls visible. Use the separate preview window for the grid preview."), MessageType.Info);
             }
         }
@@ -223,13 +207,9 @@ namespace Sunmax.GridAssetSlicer.Editor
         {
             EditorGUILayout.LabelField(T("qualityChecks", "Quality Checks"), EditorStyles.boldLabel);
             var nextGridBounds = EditorGUILayout.Toggle(T("gridBounds", "Grid Bounds"), _qualityChecks.GridBounds);
-            DrawParameterHelp("help.gridBounds", "Checks whether the calculated grid fits inside the source image.");
             var nextReadableSource = EditorGUILayout.Toggle(T("readableSource", "Readable Source"), _qualityChecks.ReadableSource);
-            DrawParameterHelp("help.readableSource", "Checks whether Unity can read source texture pixels for PNG export.");
             var nextOutputSettings = EditorGUILayout.Toggle(T("outputSettings", "Output Settings"), _qualityChecks.OutputSettings);
-            DrawParameterHelp("help.outputSettings", "Checks whether export folder and file naming settings can produce valid output paths.");
             var nextIncludedCells = EditorGUILayout.Toggle(T("includedCells", "Included Cells"), _qualityChecks.IncludedCells);
-            DrawParameterHelp("help.includedCells", "Checks whether at least one cell is still included for export.");
 
             if (nextGridBounds != _qualityChecks.GridBounds
                 || nextReadableSource != _qualityChecks.ReadableSource
@@ -246,42 +226,28 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
         }
 
-        private void DrawToolbarHelp()
+        private void OpenParameterHelpWindow()
         {
-            if (!_showParameterHelp)
-            {
-                return;
-            }
-
-            EditorGUILayout.HelpBox(T("help.sourceImage", "Source Image selects the texture asset to preview and export. Language changes the tool UI text."), MessageType.Info);
-        }
-
-        private void DrawParameterHelp(string key, string englishText)
-        {
-            if (!_showParameterHelp)
-            {
-                return;
-            }
-
-            EditorGUILayout.HelpBox(T(key, englishText), MessageType.None);
+            _parameterHelpWindow = GetWindow<ParameterHelpWindow>();
+            _parameterHelpWindow.SetOwner(this);
+            _parameterHelpWindow.Show();
         }
 
         private void DrawCenterPane()
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.MinWidth(360f), GUILayout.ExpandWidth(true)))
             {
-                var sourceName = _sourceTexture == null ? T("noSourceImage", "No source image") : $"{_sourceTexture.name} - {_sourceTexture.width}x{_sourceTexture.height}";
-                EditorGUILayout.LabelField(TFormat("previewTitle", "Preview ({0})", sourceName), EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(T("workspace", "Workspace"), EditorStyles.boldLabel);
                 CalculatePreview();
 
-                EditorGUILayout.HelpBox(T("detachedPreviewHelp", "Preview is shown in a separate resizable window. Open it to inspect cells while editing settings here."), MessageType.Info);
-                using (new EditorGUI.DisabledScope(_sourceTexture == null))
-                {
-                    if (GUILayout.Button(T("openPreviewWindow", "Open Preview Window"), GUILayout.Width(180f)))
-                    {
-                        OpenDetachedPreviewWindow();
-                    }
-                }
+                EditorGUILayout.LabelField(T("source", "Source"), _sourceTexture == null ? "-" : AssetDatabase.GetAssetPath(_sourceTexture));
+                EditorGUILayout.LabelField(T("detectedGrid", "Detected Grid"), $"{_gridSettings.Columns} x {_gridSettings.Rows}");
+                EditorGUILayout.LabelField(T("totalCells", "Total Cells"), _lastGridResult.Cells.Count.ToString());
+                EditorGUILayout.LabelField(T("included", "Included"), _lastGridResult.Cells.Count(cell => !IsExcluded(cell.Coordinate)).ToString());
+                EditorGUILayout.LabelField(T("excluded", "Excluded"), _selection.ExcludedCells.Count.ToString());
+
+                EditorGUILayout.Space(8f);
+                EditorGUILayout.HelpBox(T("detachedPreviewHelp", "Preview is shown in a separate resizable window. Use the toolbar Preview button to inspect cells while editing settings here."), MessageType.Info);
 
                 if (_sourceTexture != null && _lastGridResult.Errors.Count > 0)
                 {
@@ -289,6 +255,19 @@ namespace Sunmax.GridAssetSlicer.Editor
                     {
                         EditorGUILayout.HelpBox(LocalizeMessage(error), MessageType.Warning);
                     }
+                }
+
+                EditorGUILayout.Space(8f);
+                EditorGUILayout.LabelField(T("latestExportSummary", "Latest Export"), EditorStyles.boldLabel);
+                if (_lastExportResult == null)
+                {
+                    EditorGUILayout.LabelField(T("noExportResult", "No export result yet."), EditorStyles.miniLabel);
+                }
+                else
+                {
+                    EditorGUILayout.LabelField(T("exported", "Exported"), _lastExportResult.ExportedFiles.Count.ToString());
+                    EditorGUILayout.LabelField(T("skipped", "Skipped"), _lastExportResult.SkippedFiles.Count.ToString());
+                    EditorGUILayout.LabelField(T("error", "Error"), _lastExportResult.Errors.Count.ToString());
                 }
             }
         }
@@ -377,6 +356,69 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
         }
 
+        private sealed class ParameterHelpWindow : EditorWindow
+        {
+            private GridAssetSlicerWindow _owner;
+            private Vector2 _scroll;
+
+            public void SetOwner(GridAssetSlicerWindow owner)
+            {
+                _owner = owner;
+                titleContent = new GUIContent(owner.T("parameterHelp", "Parameter Help"));
+                minSize = new Vector2(420f, 360f);
+            }
+
+            private void OnGUI()
+            {
+                if (_owner == null)
+                {
+                    var language = GridAssetSlicerLocalization.ResolveLanguage(GridAssetSlicerLanguageMode.Auto);
+                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedHelpReconnect", "Open Tools > Grid Asset Slicer again to reconnect help."), MessageType.Info);
+                    return;
+                }
+
+                _scroll = EditorGUILayout.BeginScrollView(_scroll);
+                _owner.DrawHelpSection("sourceImage", "Source Image", new[]
+                {
+                    ("help.sourceImage", "Source Image selects the texture asset to preview and export. Language changes the tool UI text.")
+                });
+                _owner.DrawHelpSection("gridSettings", "Grid Settings", new[]
+                {
+                    ("help.rows", "Vertical cell count in the source image."),
+                    ("help.columns", "Horizontal cell count in the source image."),
+                    ("help.marginLeft", "Pixels to skip from the left edge before the grid starts."),
+                    ("help.marginTop", "Pixels to skip from the top edge before the grid starts."),
+                    ("help.marginRight", "Pixels excluded from the right edge after the grid ends."),
+                    ("help.marginBottom", "Pixels excluded from the bottom edge after the grid ends."),
+                    ("help.gutterX", "Horizontal pixel spacing between neighboring cells."),
+                    ("help.gutterY", "Vertical pixel spacing between neighboring cells."),
+                    ("help.cellWidth", "Explicit cell width. Turn it off to calculate width from the source image, margins, gutters, and column count."),
+                    ("help.cellHeight", "Explicit cell height. Turn it off to calculate height from the source image, margins, gutters, and row count.")
+                });
+                _owner.DrawHelpSection("output", "Output", new[]
+                {
+                    ("help.outputFolder", "Project-relative folder where generated PNG files are written."),
+                    ("help.outputPrefix", "Prefix used before the serial number in each generated file name."),
+                    ("help.startIndex", "First serial number used when naming exported cells."),
+                    ("help.serialDigits", "Minimum digit count for serial numbers. For example, 3 produces 001."),
+                    ("help.conflictMode", "Select how export behaves when a target file already exists: overwrite, skip, or create a duplicate name.")
+                });
+                _owner.DrawHelpSection("qualityChecks", "Quality Checks", new[]
+                {
+                    ("help.gridBounds", "Checks whether the calculated grid fits inside the source image."),
+                    ("help.readableSource", "Checks whether Unity can read source texture pixels for PNG export."),
+                    ("help.outputSettings", "Checks whether export folder and file naming settings can produce valid output paths."),
+                    ("help.includedCells", "Checks whether at least one cell is still included for export.")
+                });
+                _owner.DrawHelpSection("display", "Display", new[]
+                {
+                    ("help.parameterHelp", "Shows parameter descriptions in a separate non-modal window."),
+                    ("help.inspectorPreview", "Controls the selected-cell preview background and outline in the inspector.")
+                });
+                EditorGUILayout.EndScrollView();
+            }
+        }
+
         private void DrawRightPane()
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(RightPaneWidth)))
@@ -401,16 +443,9 @@ namespace Sunmax.GridAssetSlicer.Editor
 
                     EditorGUILayout.LabelField(T("bounds", "Bounds"), $"X:{rect.X} Y:{rect.Y} W:{rect.Width} H:{rect.Height}");
                     EditorGUILayout.LabelField(T("outputFile", "Output File"), BuildOutputFileName(rect.Coordinate));
+                    DrawInspectorPreviewSettings();
                     DrawSelectedPreview(rect);
                 }
-
-                EditorGUILayout.Space(12f);
-                EditorGUILayout.LabelField(T("sessionInfo", "Session Info"), EditorStyles.boldLabel);
-                EditorGUILayout.LabelField(T("source", "Source"), _sourceTexture == null ? "-" : AssetDatabase.GetAssetPath(_sourceTexture));
-                EditorGUILayout.LabelField(T("detectedGrid", "Detected Grid"), $"{_gridSettings.Columns} x {_gridSettings.Rows}");
-                EditorGUILayout.LabelField(T("totalCells", "Total Cells"), _lastGridResult.Cells.Count.ToString());
-                EditorGUILayout.LabelField(T("included", "Included"), _lastGridResult.Cells.Count(cell => !IsExcluded(cell.Coordinate)).ToString());
-                EditorGUILayout.LabelField(T("excluded", "Excluded"), _selection.ExcludedCells.Count.ToString());
             }
         }
 
@@ -578,12 +613,43 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
 
             var previewRect = GUILayoutUtility.GetRect(128f, 128f, GUILayout.Width(128f), GUILayout.Height(128f));
+            EditorGUI.DrawRect(previewRect, _inspectorPreviewBackground);
             var uv = new Rect(
                 (float)rect.X / _sourceTexture.width,
                 1f - ((float)rect.Bottom / _sourceTexture.height),
                 (float)rect.Width / _sourceTexture.width,
                 (float)rect.Height / _sourceTexture.height);
             GUI.DrawTextureWithTexCoords(previewRect, _sourceTexture, uv, true);
+            if (_showInspectorPreviewOutline)
+            {
+                DrawOutline(previewRect, _inspectorPreviewOutlineColor, 2f);
+            }
+        }
+
+        private void DrawInspectorPreviewSettings()
+        {
+            EditorGUILayout.Space(8f);
+            EditorGUILayout.LabelField(T("inspectorPreviewSettings", "Preview Display"), EditorStyles.boldLabel);
+            var nextOutline = EditorGUILayout.Toggle(T("showOutline", "Show Outline"), _showInspectorPreviewOutline);
+            if (nextOutline != _showInspectorPreviewOutline)
+            {
+                _showInspectorPreviewOutline = nextOutline;
+                EditorPrefs.SetBool(InspectorOutlinePrefsKey, _showInspectorPreviewOutline);
+            }
+
+            _inspectorPreviewBackground = EditorGUILayout.ColorField(T("backgroundColor", "Background Color"), _inspectorPreviewBackground);
+            _inspectorPreviewOutlineColor = EditorGUILayout.ColorField(T("outlineColor", "Outline Color"), _inspectorPreviewOutlineColor);
+        }
+
+        private void DrawHelpSection(string titleKey, string englishTitle, IEnumerable<(string Key, string EnglishText)> entries)
+        {
+            EditorGUILayout.LabelField(T(titleKey, englishTitle), EditorStyles.boldLabel);
+            foreach (var entry in entries)
+            {
+                EditorGUILayout.HelpBox(T(entry.Key, entry.EnglishText), MessageType.None);
+            }
+
+            EditorGUILayout.Space(8f);
         }
 
         private void CalculatePreview()
@@ -770,6 +836,14 @@ namespace Sunmax.GridAssetSlicer.Editor
             };
         }
 
+        private static void DrawOutline(Rect rect, Color color, float thickness)
+        {
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, thickness), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - thickness, rect.width, thickness), color);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, thickness, rect.height), color);
+            EditorGUI.DrawRect(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), color);
+        }
+
         private string LocalizeReportStatus(string status)
         {
             switch (status)
@@ -865,7 +939,8 @@ namespace Sunmax.GridAssetSlicer.Editor
             {
                 var cell = ExtractBetween(message, "Failed to export cell ", " to ");
                 var path = ExtractBetween(message, " to ", ": ");
-                return TFormat("error.failedToExportCell", "Failed to export cell {0} to {1}.", cell, path);
+                var reason = ExtractAfter(message, ": ");
+                return TFormat("error.failedToExportCell", "Failed to export cell {0} to {1}. Reason: {2}", cell, path, reason);
             }
 
             if (message.StartsWith("source.", StringComparison.Ordinal)
@@ -910,6 +985,12 @@ namespace Sunmax.GridAssetSlicer.Editor
             start += prefix.Length;
             var end = text.IndexOf(suffix, start, StringComparison.Ordinal);
             return end < 0 ? text.Substring(start) : text.Substring(start, end - start);
+        }
+
+        private static string ExtractAfter(string text, string marker)
+        {
+            var index = text.IndexOf(marker, StringComparison.Ordinal);
+            return index < 0 ? text : text.Substring(index + marker.Length);
         }
 
         private string T(string key, string englishText)

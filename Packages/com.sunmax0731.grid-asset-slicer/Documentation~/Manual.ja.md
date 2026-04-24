@@ -50,7 +50,7 @@ Tools > Grid Asset Slicer
 
 ## Grid 設定
 
-- `Display` セクションの `Parameter Help` を有効にすると、操作を続けたまま各入力項目の説明を表示できます。
+- `Display` セクションの `Open Help Window` を使うと、操作を続けたまま各入力項目の説明を別ウィンドウで表示できます。
 - `Rows`: 縦方向の cell 数です。
 - `Columns`: 横方向の cell 数です。
 - `Margin Left / Top / Right / Bottom`: 画像端から grid までの余白です。
@@ -69,6 +69,8 @@ preview は export と同じ grid calculation を使います。
 
 excluded cell は export 対象から外れ、session JSON に保存されます。
 
+Cell Inspector には選択 cell の preview が表示されます。`Show Outline`、`Background Color`、`Outline Color` で表示を調整できます。
+
 ## Export 設定
 
 - `Output Folder`: PNG の出力先です。
@@ -82,6 +84,8 @@ excluded cell は export 対象から外れ、session JSON に保存されます
 - `Overwrite`: 既存ファイルを上書きします。
 - `Skip`: 既存ファイルを残し、該当 cell を skip します。
 - `Duplicate`: `_copy01` のような別名で出力します。
+
+cell の書き出しに失敗した場合、quality report に対象 cell、出力先、失敗原因が表示されます。
 
 ## Session JSON
 

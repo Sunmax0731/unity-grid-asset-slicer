@@ -50,7 +50,7 @@ Tools > Grid Asset Slicer
 
 ## Grid Settings
 
-- Enable `Parameter Help` in the `Display` section to show inline explanations while keeping the tool editable.
+- Use `Open Help Window` in the `Display` section to show parameter explanations in a separate non-modal window while keeping the tool editable.
 - `Rows`: vertical cell count.
 - `Columns`: horizontal cell count.
 - `Margin Left / Top / Right / Bottom`: pixel margins around the grid.
@@ -69,6 +69,8 @@ Click `Preview` to open the preview in a separate resizable window. The main too
 
 Excluded cells are skipped during export and saved into session JSON.
 
+The Cell Inspector includes a selected-cell preview. Use `Show Outline`, `Background Color`, and `Outline Color` to adjust the inspector preview display.
+
 ## Export Settings
 
 - `Output Folder`: target folder for generated PNG files.
@@ -82,6 +84,8 @@ Conflict behavior:
 - `Overwrite`: write over existing files.
 - `Skip`: leave existing files and skip those cells.
 - `Duplicate`: write to a new `_copy01` style name.
+
+If export fails for a cell, the quality report includes the affected cell, output path, and reported failure reason.
 
 ## Session JSON
 
