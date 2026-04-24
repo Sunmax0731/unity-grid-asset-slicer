@@ -1,0 +1,33 @@
+{
+  "formatVersion": 1,
+  "createdUtc": "2026-04-24T00:00:00Z",
+  "toolVersion": "0.1.0",
+  "source": {
+    "assetPath": "Packages/com.sunmax0731.grid-asset-slicer/Samples~/BasicGrid/basic-grid-2x2.png",
+    "width": 64,
+    "height": 64,
+    "contentHash": "sample-basic-grid-2x2"
+  },
+  "grid": {
+    "rows": 2,
+    "columns": 2,
+    "marginLeft": 0,
+    "marginTop": 0,
+    "marginRight": 0,
+    "marginBottom": 0,
+    "gutterX": 0,
+    "gutterY": 0,
+    "cellWidth": 32,
+    "cellHeight": 32
+  },
+  "selection": {
+    "excludedCells": []
+  },
+  "export": {
+    "outputFolder": "Assets/Generated/GridSlicer/Samples/BasicGrid",
+    "filePrefix": "basic_",
+    "startIndex": 1,
+    "numberPadding": 3,
+    "conflictBehavior": "skip"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "formatVersion": 1,
+  "createdUtc": "2026-04-24T00:00:00Z",
+  "toolVersion": "0.1.0",
+  "source": {
+    "assetPath": "Packages/com.sunmax0731.grid-asset-slicer/Samples~/GuttersAndMargins/margins-2x2.png",
+    "width": 46,
+    "height": 46,
+    "contentHash": "sample-margins-2x2"
+  },
+  "grid": {
+    "rows": 2,
+    "columns": 2,
+    "marginLeft": 4,
+    "marginTop": 6,
+    "marginRight": 4,
+    "marginBottom": 2,
+    "gutterX": 2,
+    "gutterY": 2,
+    "cellWidth": 18,
+    "cellHeight": 18
+  },
+  "selection": {
+    "excludedCells": [
+      { "row": 0, "column": 1 }
+    ]
+  },
+  "export": {
+    "outputFolder": "Assets/Generated/GridSlicer/Samples/Margins",
+    "filePrefix": "margin_",
+    "startIndex": 1,
+    "numberPadding": 2,
+    "conflictBehavior": "skip"
+  }
+}
