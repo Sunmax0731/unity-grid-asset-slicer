@@ -2,7 +2,8 @@
   "name": "Sunmax.GridAssetSlicer.Editor.Tests",
   "rootNamespace": "Sunmax.GridAssetSlicer.Editor.Tests",
   "references": [
-    "Sunmax.GridAssetSlicer.Runtime"
+    "Sunmax.GridAssetSlicer.Runtime",
+    "Sunmax.GridAssetSlicer.Editor"
   ],
   "includePlatforms": [
     "Editor"
