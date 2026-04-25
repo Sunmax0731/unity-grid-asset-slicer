@@ -139,3 +139,12 @@ Always include:
 - Validation run
 - Any validation not run and why
 - Remaining next step
+
+## 共有された実装ノウハウ
+
+- Issue ごとに作業を分け、実装、検証、ドキュメント更新、日本語の Issue コメント、merge / close 状態の報告までを 1 つの完了単位にする。
+- UI 接続より先に再利用可能な処理を service に分離する。このリポジトリでは grid 計算、slice plan、読み取り可能 Texture 生成、batch slice、export 命名、競合処理、release ZIP 検査を対象にする。
+- UI を変更したら、docs、menu path、shortcut、help text、validation checklist、release packaging への影響を確認する。
+- 継続的な回帰確認のため、`ISSUE<number>_<TOPIC>_VALIDATION=PASS` のような明示的な validation marker を優先する。
+- Release packaging は tracked files のみから行う。生成 QA 画像、temp validation folder、Unity cache folder を release ZIP に含めない。
+- GitHub Issue と Issue コメントは日本語で記載する。必要な場合だけ、コード、パス、コマンド、エラー文字列は原文を保持する。
