@@ -63,11 +63,23 @@ namespace Sunmax.GridAssetSlicer.Editor
         private float _reportHeight = DefaultReportHeight;
         private string _statusMessage = "Ready.";
 
-        [MenuItem("Tools/Grid Asset Slicer/Open")]
+        [MenuItem("Tools/Grid Asset Slicer/メイン画面")]
         public static void Open()
         {
             var window = GetWindow<GridAssetSlicerWindow>("Grid Asset Slicer");
             window.Show();
+        }
+
+        [MenuItem("Tools/Grid Asset Slicer/ライセンス")]
+        public static void OpenLicense()
+        {
+            GridAssetSlicerInfoWindow.OpenLicense();
+        }
+
+        [MenuItem("Tools/Grid Asset Slicer/バージョン情報")]
+        public static void OpenVersionInfo()
+        {
+            GridAssetSlicerInfoWindow.OpenVersionInfo();
         }
 
         private void OnEnable()
@@ -346,7 +358,7 @@ namespace Sunmax.GridAssetSlicer.Editor
                 if (_owner == null)
                 {
                     var language = GridAssetSlicerLocalization.ResolveLanguage(GridAssetSlicerLanguageMode.Auto);
-                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedPreviewReconnect", "Open Tools > Grid Asset Slicer > Open again to reconnect the preview."), MessageType.Info);
+                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedPreviewReconnect", "Open Tools > Grid Asset Slicer > メイン画面 again to reconnect the preview."), MessageType.Info);
                     return;
                 }
 
@@ -385,7 +397,7 @@ namespace Sunmax.GridAssetSlicer.Editor
                 if (_owner == null)
                 {
                     var language = GridAssetSlicerLocalization.ResolveLanguage(GridAssetSlicerLanguageMode.Auto);
-                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedHelpReconnect", "Open Tools > Grid Asset Slicer > Open again to reconnect help."), MessageType.Info);
+                    EditorGUILayout.HelpBox(GridAssetSlicerLocalization.Get(language, "detachedHelpReconnect", "Open Tools > Grid Asset Slicer > メイン画面 again to reconnect help."), MessageType.Info);
                     return;
                 }
 

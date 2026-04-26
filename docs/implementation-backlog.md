@@ -97,7 +97,7 @@ Goal: main tool entry point を追加する。
 
 Scope:
 
-- `Tools > Grid Asset Slicer > Open`
+- `Tools > Grid Asset Slicer > メイン画面`
 - source texture field
 - grid settings fields
 - export settings fields

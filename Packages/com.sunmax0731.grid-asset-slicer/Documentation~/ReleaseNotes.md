@@ -7,7 +7,7 @@ Initial BOOTH and GitHub release candidate scope.
 ### Included
 
 - Unity package identity: `com.sunmax0731.grid-asset-slicer`.
-- Editor menu: `Tools > Grid Asset Slicer > Open`.
+- Editor menu: `Tools > Grid Asset Slicer > メイン画面`.
 - Grid settings for rows, columns, margins, gutters, and explicit cell size.
 - Preview grid based on the same calculation used for export.
 - Cell selection and include / exclude toggling.

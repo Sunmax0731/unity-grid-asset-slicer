@@ -20,7 +20,7 @@ GitHub Release と BOOTH 配布物は同一内容です。
 
 ## v0.1.0 の主な機能
 
-- `Tools > Grid Asset Slicer > Open` から起動する Editor window
+- `Tools > Grid Asset Slicer > メイン画面` から起動する Editor window
 - source PNG selection
 - rows / columns / margins / gutters / explicit cell size の grid setup
 - export と同じ cell rectangles を使う別ウィンドウ preview

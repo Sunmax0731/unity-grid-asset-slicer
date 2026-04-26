@@ -10,7 +10,7 @@ namespace Sunmax.GridAssetSlicer.Editor.Release
         private const string StageRoot = "Assets/__UnityGridAssetSlicerReleaseStaging__";
         private const string StageToolRoot = StageRoot + "/UnityGridAssetSlicer";
 
-        [MenuItem("Tools/Grid Asset Slicer/Build Release UnityPackage")]
+        [MenuItem("Tools/Grid Asset Slicer/Developer/Build Release UnityPackage")]
         private static void BuildUnityPackageInteractive()
         {
             var manifest = LoadManifest();

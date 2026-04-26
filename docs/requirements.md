@@ -24,7 +24,7 @@ Unity Grid Asset Slicer は、グリッド状に配置された1枚の画像を 
 ユーザーは次のメニューからツールを起動できる。
 
 ```text
-Tools > Grid Asset Slicer > Open
+Tools > Grid Asset Slicer > メイン画面
 ```
 
 ### RQ-002 ソース画像選択
@@ -136,7 +136,7 @@ Runtime、Editor UI、永続化、任意の画像解析 backend を分離し、U
 
 ## 5. MVP 受け入れ条件
 
-- `Tools > Grid Asset Slicer > Open` から Editor window が開く。
+- `Tools > Grid Asset Slicer > メイン画面` から Editor window が開く。
 - PNG texture を選択して preview できる。
 - 手動行列指定で selected cell を PNG 出力できる。
 - 除外セルは出力されない。

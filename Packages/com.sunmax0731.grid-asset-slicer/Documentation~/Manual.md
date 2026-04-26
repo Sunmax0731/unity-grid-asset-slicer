@@ -34,8 +34,10 @@ The package is also intended to work as a local package or Git URL package throu
 Open the editor window from:
 
 ```text
-Tools > Grid Asset Slicer > Open
+Tools > Grid Asset Slicer > メイン画面
 ```
+
+The license and version windows are available from `Tools > Grid Asset Slicer > ライセンス` and `Tools > Grid Asset Slicer > バージョン情報`.
 
 ## Basic Workflow
 

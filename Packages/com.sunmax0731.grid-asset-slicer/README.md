@@ -17,8 +17,14 @@ com.sunmax0731.grid-asset-slicer
 Menu path:
 
 ```text
-Tools > Grid Asset Slicer > Open
+Tools > Grid Asset Slicer > メイン画面
+Tools > Grid Asset Slicer > ライセンス
+Tools > Grid Asset Slicer > バージョン情報
 ```
+
+## License
+
+Unity Grid Asset Slicer is distributed under the MIT License. See `LICENSE.md`.
 
 ## Development Order
 

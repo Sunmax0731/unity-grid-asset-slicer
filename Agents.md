@@ -18,7 +18,7 @@
 - Product: Unity Grid Asset Slicer
 - Unity version: 6000.4.0f1
 - Delivery target: UPM Git package
-- Main menu path: `Tools > Grid Asset Slicer > Open`
+- Main menu path: `Tools > Grid Asset Slicer > メイン画面`
 
 ## Workspace Rule
 

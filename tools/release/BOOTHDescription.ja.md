@@ -14,7 +14,7 @@
 
 ## 主な機能
 
-- `Tools > Grid Asset Slicer > Open` から起動する Unity Editor window
+- `Tools > Grid Asset Slicer > メイン画面` から起動する Unity Editor window
 - source PNG の選択
 - rows / columns / margins / gutters / cell width / cell height の設定
 - export と同じ grid calculation を使った preview
