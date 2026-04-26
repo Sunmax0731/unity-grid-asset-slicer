@@ -7,7 +7,7 @@ namespace Sunmax.GridAssetSlicer.Editor
     {
         private const string ProductName = "Unity Grid Asset Slicer";
         private const string PackageId = "com.sunmax0731.grid-asset-slicer";
-        private const string Version = "0.1.0";
+        private const string Version = "0.1.1";
         private const string ValidatedUnity = "6000.4.0f1";
         private const string RepositoryUrl = "https://github.com/Sunmax0731/unity-grid-asset-slicer";
         private const string License = "MIT License";

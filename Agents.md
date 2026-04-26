@@ -124,3 +124,10 @@ Manual Unity validation:
 - 作業前から project が compile できない。
 - 既存 local changes が依頼内容と衝突する。
 - GitHub operation に認証が必要で実行できない。
+
+## Shared Unity Editor Extension Convention
+
+- Public menu entries use `Tools > Grid Asset Slicer > メイン画面`, `Tools > Grid Asset Slicer > ライセンス`, and `Tools > Grid Asset Slicer > バージョン情報`.
+- Keep developer-only or helper commands under a secondary group such as `Developer` or `Utilities`.
+- The license is MIT License. Keep `README.md`, package README, terms/manual text, and the Unity Editor license window aligned with MIT.
+- When menu or license text changes, update README, manual, validation checklist, release notes, BOOTH/GitHub release copy, and release package contents in the same change.

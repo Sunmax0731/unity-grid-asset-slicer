@@ -148,3 +148,10 @@ Always include:
 - 継続的な回帰確認のため、`ISSUE<number>_<TOPIC>_VALIDATION=PASS` のような明示的な validation marker を優先する。
 - Release packaging は tracked files のみから行う。生成 QA 画像、temp validation folder、Unity cache folder を release ZIP に含めない。
 - GitHub Issue と Issue コメントは日本語で記載する。必要な場合だけ、コード、パス、コマンド、エラー文字列は原文を保持する。
+
+## Shared Unity Editor Extension Convention
+
+- Public menu entries use `Tools > Grid Asset Slicer > メイン画面`, `Tools > Grid Asset Slicer > ライセンス`, and `Tools > Grid Asset Slicer > バージョン情報`.
+- Keep developer-only or helper commands under a secondary group such as `Developer` or `Utilities`.
+- The license is MIT License. Keep `README.md`, package README, terms/manual text, and the Unity Editor license window aligned with MIT.
+- When menu or license text changes, update README, manual, validation checklist, release notes, BOOTH/GitHub release copy, and release package contents in the same change.

@@ -10,7 +10,7 @@ namespace Sunmax.GridAssetSlicer.Editor
 {
     public sealed class GridAssetSlicerWindow : EditorWindow
     {
-        private const string ToolVersion = "0.1.0";
+        private const string ToolVersion = "0.1.1";
         private const float LeftPaneWidth = 280f;
         private const float RightPaneWidth = 320f;
         private const float PaneGap = 18f;

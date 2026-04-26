@@ -77,7 +77,7 @@ namespace Sunmax.GridAssetSlicer.Editor.Tests
             return @"{
   ""formatVersion"": 1,
   ""createdUtc"": ""2026-04-24T00:00:00Z"",
-  ""toolVersion"": ""0.1.0"",
+  ""toolVersion"": ""0.1.1"",
   ""source"": {
     ""assetPath"": ""Assets/SourceSheets/items.png"",
     ""width"": 64,

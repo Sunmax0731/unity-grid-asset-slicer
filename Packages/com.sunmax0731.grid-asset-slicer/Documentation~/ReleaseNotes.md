@@ -1,5 +1,13 @@
 # Release Notes
 
+## v0.1.1
+
+- Unity Editor menu entries are now standardized as `Tools > Grid Asset Slicer > メイン画面`, `ライセンス`, and `バージョン情報`.
+- Added a Unity Editor information window for MIT License and version details.
+- Updated README, package README, manuals, validation checklist, release notes, BOOTH copy, and GitHub release copy to match the current implementation.
+- Release validation target: Unity `6000.4.0f1`, EditMode tests.
+
+
 ## v0.1.0
 
 Initial BOOTH and GitHub release candidate scope.
