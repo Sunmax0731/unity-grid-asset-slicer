@@ -4,7 +4,7 @@
 
 Unity Grid Asset Slicer を Unity Editor 拡張として実装し、GitHub Release と BOOTH で同一成果物を配布できる状態にする。
 
-現在のリリース対象は `v0.1.1` とする。
+現在のリリース対象は `v0.1.2` とする。
 
 ## 2. Reference Project
 

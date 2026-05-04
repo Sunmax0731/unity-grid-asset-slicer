@@ -107,6 +107,10 @@ Acceptance:
 
 - clean Unity project で window が開く。
 - UI 内に grid math を重複実装しない。
+- rows / columns / margins / gutters / explicit cell size を field と slider の両方で操作できる。
+- source image ベースの margin controller で上下左右余白を調整できる。
+- 設定フォームを 1 pane に集約し、output settings と cell inspector も同じ pane から操作できる。
+- 各列・各行の区切り位置を個別に調整できる。
 
 ### 7. Preview and Cell Selection
 
@@ -116,6 +120,7 @@ Acceptance:
 
 - 除外 cell は export されない。
 - save / load で excluded cells が復元される。
+- implicit cell size が割り切れない設定でも preview と export が同じ rect 一覧を使う。
 
 ### 8. Quality Checks
 

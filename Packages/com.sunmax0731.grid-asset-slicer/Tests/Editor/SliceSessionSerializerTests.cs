@@ -14,6 +14,8 @@ namespace Sunmax.GridAssetSlicer.Editor.Tests
             Assert.That(result.Session.Source.AssetPath, Is.EqualTo("Assets/SourceSheets/items.png"));
             Assert.That(result.Session.Grid.Rows, Is.EqualTo(2));
             Assert.That(result.Session.Grid.Columns, Is.EqualTo(2));
+            Assert.That(result.Session.Export.OutputWidth, Is.EqualTo(96));
+            Assert.That(result.Session.Export.OutputHeight, Is.EqualTo(128));
             Assert.That(result.Session.Export.ConflictBehavior, Is.EqualTo(ExportConflictBehavior.Duplicate));
             Assert.That(result.Session.Selection.ExcludedCells, Has.Count.EqualTo(2));
             Assert.That(result.Session.Selection.ExcludedCells[1], Is.EqualTo(new CellCoordinate(1, 1)));
@@ -23,6 +25,8 @@ namespace Sunmax.GridAssetSlicer.Editor.Tests
         public void ToJson_RoundTripsSession()
         {
             var session = SliceSessionSerializer.FromJson(CreateSampleJson()).Session;
+            session.Grid.ColumnWidths = new[] { 20, 44 };
+            session.Grid.RowHeights = new[] { 28, 36 };
 
             var json = SliceSessionSerializer.ToJson(session);
             var result = SliceSessionSerializer.FromJson(json);
@@ -31,8 +35,24 @@ namespace Sunmax.GridAssetSlicer.Editor.Tests
             Assert.That(result.Session.FormatVersion, Is.EqualTo(GridSliceSession.CurrentFormatVersion));
             Assert.That(result.Session.Source.Width, Is.EqualTo(64));
             Assert.That(result.Session.Grid.CellWidth, Is.EqualTo(32));
+            Assert.That(result.Session.Grid.ColumnWidths, Is.EqualTo(new[] { 20, 44 }));
+            Assert.That(result.Session.Grid.RowHeights, Is.EqualTo(new[] { 28, 36 }));
             Assert.That(result.Session.Export.OutputFolder, Is.EqualTo("Assets/Generated/GridSlicer/items"));
+            Assert.That(result.Session.Export.OutputWidth, Is.EqualTo(96));
+            Assert.That(result.Session.Export.OutputHeight, Is.EqualTo(128));
             Assert.That(result.Session.Selection.ExcludedCells.Any(cell => cell.Equals(new CellCoordinate(0, 1))), Is.True);
+        }
+
+        [Test]
+        public void FromJson_RejectsExportResizeWhenOnlyOneDimensionIsSpecified()
+        {
+            var json = CreateSampleJson().Replace(@"""outputWidth"": 96,
+    ""outputHeight"": 128,", @"""outputWidth"": 96,");
+
+            var result = SliceSessionSerializer.FromJson(json);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Errors, Does.Contain("Output Width and Output Height must both be specified together."));
         }
 
         [Test]
@@ -107,6 +127,8 @@ namespace Sunmax.GridAssetSlicer.Editor.Tests
     ""filePrefix"": ""item_"",
     ""startIndex"": 1,
     ""numberPadding"": 3,
+    ""outputWidth"": 96,
+    ""outputHeight"": 128,
     ""conflictBehavior"": ""duplicate""
   }
 }";

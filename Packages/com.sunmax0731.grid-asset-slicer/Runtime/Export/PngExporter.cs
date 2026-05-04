@@ -20,6 +20,12 @@ namespace Sunmax.GridAssetSlicer
                 return Error("Source texture is required.");
             }
 
+            var settingErrors = ExportSettingsValidator.Validate(request.ExportSettings);
+            if (settingErrors.Count > 0)
+            {
+                return new PngExportResult(Array.Empty<PngExportFileResult>(), Array.Empty<PngExportFileResult>(), settingErrors);
+            }
+
             fileExists ??= File.Exists;
 
             var includedCells = GetIncludedCells(request.Cells, request.Selection);
@@ -60,7 +66,7 @@ namespace Sunmax.GridAssetSlicer
 
                 try
                 {
-                    var pngBytes = TextureCellExtractor.ExtractPng(request.SourceTexture, rect);
+                    var pngBytes = BuildPngBytes(request.SourceTexture, rect, request.ExportSettings);
                     var directory = Path.GetDirectoryName(item.OutputPath);
                     if (!string.IsNullOrEmpty(directory))
                     {
@@ -79,9 +85,49 @@ namespace Sunmax.GridAssetSlicer
             return new PngExportResult(exported, skipped, errors);
         }
 
+        private static byte[] BuildPngBytes(Texture2D sourceTexture, CellRect rect, ExportSettings settings)
+        {
+            Texture2D extractedTexture = null;
+            Texture2D resizedTexture = null;
+            try
+            {
+                extractedTexture = TextureCellExtractor.ExtractTexture(sourceTexture, rect);
+                var encodeTexture = extractedTexture;
+                if (settings.OutputWidth.HasValue && settings.OutputHeight.HasValue)
+                {
+                    resizedTexture = TextureExportResizer.Resize(extractedTexture, settings.OutputWidth.Value, settings.OutputHeight.Value);
+                    encodeTexture = resizedTexture;
+                }
+
+                return encodeTexture.EncodeToPNG();
+            }
+            finally
+            {
+                DestroyTexture(resizedTexture);
+                DestroyTexture(extractedTexture);
+            }
+        }
+
         private static PngExportResult Error(string error)
         {
             return new PngExportResult(Array.Empty<PngExportFileResult>(), Array.Empty<PngExportFileResult>(), new[] { error });
+        }
+
+        private static void DestroyTexture(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(texture);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
         }
 
         private static IReadOnlyList<CellRect> GetIncludedCells(IReadOnlyList<CellRect> cells, SliceSelection selection)

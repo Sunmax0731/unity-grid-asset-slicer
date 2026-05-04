@@ -10,6 +10,10 @@ namespace Sunmax.GridAssetSlicer
 
         public int NumberPadding { get; set; }
 
+        public int? OutputWidth { get; set; }
+
+        public int? OutputHeight { get; set; }
+
         public ExportConflictBehavior ConflictBehavior { get; set; }
     }
 }

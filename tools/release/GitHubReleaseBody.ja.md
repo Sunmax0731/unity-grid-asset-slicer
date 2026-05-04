@@ -1,11 +1,11 @@
-# Unity Grid Asset Slicer v0.1.1
+# Unity Grid Asset Slicer v0.1.2
 
 Unity Editor 上で grid-based PNG source image を個別 PNG に切り出すためのエディタ拡張です。
 
 ## 含まれるもの
 
-- `UnityGridAssetSlicer-0.1.1.unitypackage`
-- `UnityGridAssetSlicer-0.1.1-release.zip`
+- `UnityGridAssetSlicer-0.1.2.unitypackage`
+- `UnityGridAssetSlicer-0.1.2-release.zip`
 - `README.md`
 - `Manual.ja.md`
 - `Manual.md`
@@ -18,11 +18,15 @@ Unity Editor 上で grid-based PNG source image を個別 PNG に切り出すた
 
 GitHub Release と BOOTH 配布物は同一内容です。
 
-## v0.1.1 の主な機能
+## v0.1.2 の主な変更
 
 - `Tools > Grid Asset Slicer > メイン画面` から起動する Editor window
 - source PNG selection
 - rows / columns / margins / gutters / explicit cell size の grid setup
+- draggable `Margin Controller`
+- rows / columns / margins / gutters / cell size の slider-assisted editing
+- custom column / row boundaries with persisted `columnWidths` / `rowHeights`
+- optional uniform export resize width / height
 - export と同じ cell rectangles を使う別ウィンドウ preview
 - cell selection
 - 右クリックによる include / exclude 切り替え

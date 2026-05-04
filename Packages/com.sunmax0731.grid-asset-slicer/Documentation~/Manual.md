@@ -44,22 +44,31 @@ The license and version windows are available from `Tools > Grid Asset Slicer > 
 1. Assign a PNG texture to `Source Image`.
 2. Enter `Rows` and `Columns`.
 3. Set margins, gutters, cell width, and cell height as needed.
-4. Click `Preview` and check the generated cells in the separate preview window.
-5. Right-click cells that should be excluded.
-6. Set `Output Folder`, `File Prefix`, `Start Index`, `Number Padding`, and `Conflict`.
-7. Click `Export...`.
-8. Use `Save Session` when the setup should be replayed later.
+4. Use the larger `Margin Controller` to drag the source-image guides and adjust the four margins directly.
+5. Enable `Custom Columns` or `Custom Rows` when each boundary should be adjusted independently.
+6. Click `Preview` and check the generated cells in the separate preview window.
+7. Right-click cells that should be excluded.
+8. Set `Output Folder`, `File Prefix`, `Start Index`, `Number Padding`, optional `Output Width / Height`, and `Conflict`.
+9. Click `Export...`.
+10. Use `Save Session` when the setup should be replayed later.
 
 ## Grid Settings
 
 - Use the toolbar `Help` button to show parameter explanations in a separate non-modal window while keeping the tool editable.
-- `Rows`: vertical cell count.
-- `Columns`: horizontal cell count.
-- `Margin Left / Top / Right / Bottom`: pixel margins around the grid.
-- `Gutter X / Y`: pixel spacing between cells.
-- `Cell Width / Height`: explicit cell size. If omitted, the size is calculated from the source image, margins, gutters, rows, and columns.
+- `Rows`: vertical cell count. Both the numeric field and the slider can be used.
+- `Columns`: horizontal cell count. Both the numeric field and the slider can be used.
+- `Margin Left / Top / Right / Bottom`: pixel margins around the grid. The field, slider, and margin controller stay in sync.
+- `Gutter X / Y`: pixel spacing between cells. Both the numeric field and the slider can be used.
+- `Cell Width / Height`: explicit cell size. If omitted, the size is calculated from the source image, margins, gutters, rows, and columns. When enabled, the slider can also adjust the explicit value.
+- `Custom Columns / Custom Rows`: enable per-column or per-row boundary editing. Moving one boundary redistributes the adjacent widths or heights, and the same section also exposes the matching margin sliders for that axis.
 
-Validation warnings are shown when the grid is outside the source image, but preview remains visible when cell rectangles can still be calculated. Preview is unavailable only when the settings cannot produce any cell rectangles, such as invalid row or column counts or unresolved implicit cell sizes.
+Validation warnings are shown when the grid is outside the source image, but preview remains visible when cell rectangles can still be calculated. Preview is unavailable only when the settings cannot produce any cell rectangles, such as invalid row or column counts or cases where the available area cannot assign at least one pixel to every cell.
+
+When implicit cell sizes are not evenly divisible, the tool still calculates integer boundaries and uses the same resulting rectangles for both preview and export.
+
+The main editor now keeps grid settings, variable-boundary settings, export settings, the cell inspector, and quality toggles in a single left-side settings pane. Each group is shown as a foldout so the window stays readable even when more controls are enabled.
+
+The center workspace follows a simple editor flow: empty state or summary first, then preview guidance and next actions, then warnings and the latest export result. This keeps status and execution feedback near the main work area without scattering it across extra side panels.
 
 ## Preview and Exclusion
 
@@ -75,12 +84,13 @@ The Cell Inspector includes a selected-cell preview. Use `Show Outline`, `Backgr
 
 ## Export Settings
 
-Export settings are shown under the `Workspace` section in the main window.
+Export settings are shown in the left settings pane under the `Output` foldout.
 
 - `Output Folder`: target folder for generated PNG files.
 - `File Prefix`: prefix for generated file names.
 - `Start Index`: first sequence number.
 - `Number Padding`: zero-padding digits for sequence numbers.
+- `Output Width / Height`: optional unified size for every exported PNG. When both are enabled, all cells are resized to that exact pixel size before writing.
 - `Conflict`: behavior when a target file already exists.
 
 Conflict behavior:

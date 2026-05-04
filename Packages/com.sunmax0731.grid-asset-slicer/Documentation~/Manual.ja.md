@@ -44,22 +44,31 @@ Tools > Grid Asset Slicer > メイン画面
 1. `Source Image` に PNG テクスチャを指定します。
 2. `Rows` と `Columns` を入力します。
 3. 必要に応じて margin、gutter、cell width、cell height を設定します。
-4. `Preview` を押し、別ウィンドウの preview で cell 分割を確認します。
-5. 出力しない cell は右クリックで excluded にします。
-6. `Output Folder`、`File Prefix`、`Start Index`、`Number Padding`、`Conflict` を設定します。
-7. `Export...` を実行します。
-8. 必要に応じて `Save Session` で設定を JSON に保存します。
+4. 左ペインの大きめの `Margin Controller` で source image 上のガイドをドラッグし、上下左右の余白を直接調整します。
+5. 必要に応じて `Custom Columns` / `Custom Rows` を有効化し、各列・各行の区切り位置を個別に調整します。
+6. `Preview` を押し、別ウィンドウの preview で cell 分割を確認します。
+7. 出力しない cell は右クリックで excluded にします。
+8. `Output Folder`、`File Prefix`、`Start Index`、`Number Padding`、必要に応じて `Output Width / Height`、`Conflict` を設定します。
+9. `Export...` を実行します。
+10. 必要に応じて `Save Session` で設定を JSON に保存します。
 
 ## Grid 設定
 
 - ツールバーの `Help` ボタンを使うと、操作を続けたまま各入力項目の説明を別ウィンドウで表示できます。
-- `Rows`: 縦方向の cell 数です。
-- `Columns`: 横方向の cell 数です。
-- `Margin Left / Top / Right / Bottom`: 画像端から grid までの余白です。
-- `Gutter X / Y`: cell 間の隙間です。
-- `Cell Width / Height`: cell サイズを明示する場合に使います。未指定の場合は画像サイズ、margin、gutter、rows、columns から計算します。
+- `Rows`: 縦方向の cell 数です。数値 field と slider の両方で調整できます。
+- `Columns`: 横方向の cell 数です。数値 field と slider の両方で調整できます。
+- `Margin Left / Top / Right / Bottom`: 画像端から grid までの余白です。数値 field / slider / margin controller の 3 つが同期します。
+- `Gutter X / Y`: cell 間の隙間です。数値 field と slider の両方で調整できます。
+- `Cell Width / Height`: cell サイズを明示する場合に使います。未指定の場合は画像サイズ、margin、gutter、rows、columns から計算します。ON 中は slider でも調整できます。
+- `Custom Columns / Custom Rows`: 各列幅 / 各行高を個別管理したいときに使います。区切り位置 slider を動かすと、隣接する幅が再配分されます。同じセクションに、その軸の余白 slider も表示されます。
 
-grid が画像範囲外になる場合は validation warning を表示しますが、cell 矩形を計算できる場合は preview を表示します。rows / columns が無効な場合や、暗黙 cell サイズを計算できない場合など、cell 矩形を作れない設定のときだけ preview は表示されません。
+grid が画像範囲外になる場合は validation warning を表示しますが、cell 矩形を計算できる場合は preview を表示します。rows / columns が無効な場合や、各 cell に 1 pixel 以上を割り当てられない場合など、cell 矩形を作れない設定のときだけ preview は表示されません。
+
+implicit cell size が割り切れない場合でも、tool は整数境界を補間して cell rect を作り、preview と export の両方に同じ rect 一覧を使います。
+
+メインツールの設定フォームは 1 つの左ペインに集約されています。grid、可変境界、output、cell inspector、quality checks を同じ場所で調整でき、各グループは Foldout で開閉できます。
+
+中央の workspace は、元画像未選択時の empty state、現在の概要、Preview / Export の主要操作、警告、最新の書き出し結果が順に分かる構成です。余計な右ペインを増やさず、今の状態と次の操作を追いやすくしています。
 
 ## Preview と Cell 除外
 
@@ -75,12 +84,13 @@ Cell Inspector には選択 cell の preview が表示されます。`Show Outli
 
 ## Export 設定
 
-Export 設定はメインウィンドウの `Workspace` セクション内に表示されます。
+Export 設定は左の設定ペイン内の `Output` Foldout に表示されます。
 
 - `Output Folder`: PNG の出力先です。
 - `File Prefix`: 出力ファイル名の prefix です。
 - `Start Index`: 連番の開始番号です。
 - `Number Padding`: 連番のゼロ埋め桁数です。
+- `Output Width / Height`: すべての書き出し PNG を統一サイズにしたい場合の設定です。両方を有効にすると、各セルは書き出し前にそのピクセルサイズへリサイズされます。
 - `Conflict`: 既存ファイルがある場合の動作です。
 
 `Conflict` は次の値を選べます。

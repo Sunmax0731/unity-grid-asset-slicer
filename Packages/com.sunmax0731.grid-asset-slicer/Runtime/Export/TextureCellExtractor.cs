@@ -5,7 +5,7 @@ namespace Sunmax.GridAssetSlicer
 {
     public static class TextureCellExtractor
     {
-        public static byte[] ExtractPng(Texture2D sourceTexture, CellRect rect)
+        public static Texture2D ExtractTexture(Texture2D sourceTexture, CellRect rect)
         {
             if (sourceTexture == null)
             {
@@ -17,10 +17,16 @@ namespace Sunmax.GridAssetSlicer
             var unityY = sourceTexture.height - rect.Y - rect.Height;
             var pixels = sourceTexture.GetPixels(rect.X, unityY, rect.Width, rect.Height);
             var cellTexture = new Texture2D(rect.Width, rect.Height, TextureFormat.RGBA32, false);
+            cellTexture.SetPixels(pixels);
+            cellTexture.Apply(false, false);
+            return cellTexture;
+        }
+
+        public static byte[] ExtractPng(Texture2D sourceTexture, CellRect rect)
+        {
+            var cellTexture = ExtractTexture(sourceTexture, rect);
             try
             {
-                cellTexture.SetPixels(pixels);
-                cellTexture.Apply(false, false);
                 return cellTexture.EncodeToPNG();
             }
             finally

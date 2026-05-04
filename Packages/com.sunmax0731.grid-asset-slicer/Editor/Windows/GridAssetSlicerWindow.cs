@@ -10,17 +10,18 @@ namespace Sunmax.GridAssetSlicer.Editor
 {
     public sealed class GridAssetSlicerWindow : EditorWindow
     {
-        private const string ToolVersion = "0.1.1";
-        private const float LeftPaneWidth = 280f;
-        private const float RightPaneWidth = 320f;
+        private const string ToolVersion = "0.1.2";
+        private const float LeftPaneWidth = 460f;
         private const float PaneGap = 18f;
         private const float CellSize = 72f;
         private const float CellGap = 4f;
+        private const float MarginControllerMaxHeight = 340f;
+        private const float MarginControllerLineThickness = 2f;
+        private const float MarginControllerHitPadding = 8f;
         private const string QualityPrefsPrefix = "Sunmax.GridAssetSlicer.Quality.";
         private const string LanguageModePrefsKey = "Sunmax.GridAssetSlicer.LanguageMode";
         private const string InspectorOutlinePrefsKey = "Sunmax.GridAssetSlicer.InspectorOutline";
         private const string ReportHeightPrefsKey = "Sunmax.GridAssetSlicer.ReportHeight";
-        private const string ReadableCopyFolder = "Assets/Generated/GridSlicer/.TempReadable";
         private const float DefaultReportHeight = 140f;
         private const float MinReportHeight = 90f;
         private const float MaxReportHeight = 320f;
@@ -44,11 +45,14 @@ namespace Sunmax.GridAssetSlicer.Editor
             FilePrefix = "item_",
             StartIndex = 1,
             NumberPadding = 3,
+            OutputWidth = null,
+            OutputHeight = null,
             ConflictBehavior = ExportConflictBehavior.Duplicate
         };
 
         private SliceSelection _selection = new SliceSelection();
         private CellCoordinate? _selectedCell;
+        private Vector2 _settingsScroll;
         private Vector2 _reportScroll;
         private GridCalculationResult _lastGridResult = new GridCalculationResult(Array.Empty<CellRect>(), Array.Empty<string>());
         private PngExportResult _lastExportResult;
@@ -62,6 +66,13 @@ namespace Sunmax.GridAssetSlicer.Editor
         private Color _inspectorPreviewOutlineColor = Color.cyan;
         private float _reportHeight = DefaultReportHeight;
         private string _statusMessage = "Ready.";
+        private MarginDragHandle _activeMarginDragHandle;
+        private bool _showGridSettings = true;
+        private bool _showMarginController = true;
+        private bool _showVariableGrid = true;
+        private bool _showOutputSettings = true;
+        private bool _showCellInspector = true;
+        private bool _showQualityChecks = false;
 
         [MenuItem("Tools/Grid Asset Slicer/メイン画面")]
         public static void Open()
@@ -104,9 +115,6 @@ namespace Sunmax.GridAssetSlicer.Editor
                 DrawPaneSeparator();
                 GUILayout.Space(PaneGap);
                 DrawCenterPane();
-                GUILayout.Space(PaneGap);
-                DrawPaneSeparator();
-                DrawRightPane();
             }
 
             DrawQualityReport();
@@ -185,26 +193,33 @@ namespace Sunmax.GridAssetSlicer.Editor
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(LeftPaneWidth)))
             {
-                DrawSectionHeader(T("gridSettings", "Grid Settings"));
-                _gridSettings.Rows = EditorGUILayout.IntField(T("rows", "Rows"), _gridSettings.Rows);
-                _gridSettings.Columns = EditorGUILayout.IntField(T("columns", "Columns"), _gridSettings.Columns);
-                _gridSettings.MarginLeft = EditorGUILayout.IntField(T("marginLeft", "Margin Left"), _gridSettings.MarginLeft);
-                _gridSettings.MarginTop = EditorGUILayout.IntField(T("marginTop", "Margin Top"), _gridSettings.MarginTop);
-                _gridSettings.MarginRight = EditorGUILayout.IntField(T("marginRight", "Margin Right"), _gridSettings.MarginRight);
-                _gridSettings.MarginBottom = EditorGUILayout.IntField(T("marginBottom", "Margin Bottom"), _gridSettings.MarginBottom);
-                _gridSettings.GutterX = EditorGUILayout.IntField(T("gutterX", "Gutter X"), _gridSettings.GutterX);
-                _gridSettings.GutterY = EditorGUILayout.IntField(T("gutterY", "Gutter Y"), _gridSettings.GutterY);
-                _gridSettings.CellWidth = DrawNullableInt(T("cellWidth", "Cell Width"), _gridSettings.CellWidth);
-                _gridSettings.CellHeight = DrawNullableInt(T("cellHeight", "Cell Height"), _gridSettings.CellHeight);
+                _settingsScroll = EditorGUILayout.BeginScrollView(_settingsScroll, GUI.skin.box);
+                DrawFoldoutSection(ref _showGridSettings, T("gridSettings", "Grid Settings"), () =>
+                {
+                    _gridSettings.Rows = DrawIntFieldWithSlider(T("rows", "Rows"), _gridSettings.Rows, 1, GetCountSliderMax(_gridSettings.Rows));
+                    _gridSettings.Columns = DrawIntFieldWithSlider(T("columns", "Columns"), _gridSettings.Columns, 1, GetCountSliderMax(_gridSettings.Columns));
+                    _gridSettings.MarginLeft = DrawIntFieldWithSlider(T("marginLeft", "Margin Left"), _gridSettings.MarginLeft, 0, GetPixelSliderMax(_gridSettings.MarginLeft, GetSourceWidth()));
+                    _gridSettings.MarginTop = DrawIntFieldWithSlider(T("marginTop", "Margin Top"), _gridSettings.MarginTop, 0, GetPixelSliderMax(_gridSettings.MarginTop, GetSourceHeight()));
+                    _gridSettings.MarginRight = DrawIntFieldWithSlider(T("marginRight", "Margin Right"), _gridSettings.MarginRight, 0, GetPixelSliderMax(_gridSettings.MarginRight, GetSourceWidth()));
+                    _gridSettings.MarginBottom = DrawIntFieldWithSlider(T("marginBottom", "Margin Bottom"), _gridSettings.MarginBottom, 0, GetPixelSliderMax(_gridSettings.MarginBottom, GetSourceHeight()));
+                    _gridSettings.GutterX = DrawIntFieldWithSlider(T("gutterX", "Gutter X"), _gridSettings.GutterX, 0, GetPixelSliderMax(_gridSettings.GutterX, GetSourceWidth()));
+                    _gridSettings.GutterY = DrawIntFieldWithSlider(T("gutterY", "Gutter Y"), _gridSettings.GutterY, 0, GetPixelSliderMax(_gridSettings.GutterY, GetSourceHeight()));
+                    _gridSettings.CellWidth = DrawNullableIntWithSlider(T("cellWidth", "Cell Width"), _gridSettings.CellWidth, 1, GetPixelSliderMax(_gridSettings.CellWidth ?? 1, GetSourceWidth()));
+                    _gridSettings.CellHeight = DrawNullableIntWithSlider(T("cellHeight", "Cell Height"), _gridSettings.CellHeight, 1, GetPixelSliderMax(_gridSettings.CellHeight ?? 1, GetSourceHeight()));
+                });
 
-                DrawSectionSeparator();
-                DrawQualityCheckSettings();
+                NormalizeCustomGridArrays();
+                DrawFoldoutSection(ref _showMarginController, T("marginController", "Margin Controller"), DrawMarginController);
+                DrawFoldoutSection(ref _showVariableGrid, T("variableGrid", "Variable Grid Boundaries"), DrawVariableGridSettings);
+                DrawFoldoutSection(ref _showOutputSettings, T("output", "Output"), DrawOutputSettings);
+                DrawFoldoutSection(ref _showCellInspector, T("cellInspector", "Cell Inspector"), DrawInspectorPaneContent);
+                DrawFoldoutSection(ref _showQualityChecks, T("qualityChecks", "Quality Checks"), DrawQualityCheckSettings);
+                EditorGUILayout.EndScrollView();
             }
         }
 
         private void DrawQualityCheckSettings()
         {
-            DrawSectionHeader(T("qualityChecks", "Quality Checks"));
             var nextGridBounds = EditorGUILayout.Toggle(T("gridBounds", "Grid Bounds"), _qualityChecks.GridBounds);
             var nextReadableSource = EditorGUILayout.Toggle(T("readableSource", "Readable Source"), _qualityChecks.ReadableSource);
             var nextOutputSettings = EditorGUILayout.Toggle(T("outputSettings", "Output Settings"), _qualityChecks.OutputSettings);
@@ -225,6 +240,519 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
         }
 
+        private void DrawMarginController()
+        {
+            EditorGUILayout.HelpBox(T("marginControllerHelp", "Drag the guide lines on this source-image controller to adjust the margins without opening the preview window."), MessageType.None);
+
+            if (_sourceTexture == null)
+            {
+                EditorGUILayout.HelpBox(T("marginControllerNoSource", "Select a source image to enable the margin controller."), MessageType.Info);
+                return;
+            }
+
+            var aspect = Mathf.Max(0.01f, (float)_sourceTexture.width / _sourceTexture.height);
+            var controlRect = GUILayoutUtility.GetAspectRect(aspect, GUILayout.ExpandWidth(true), GUILayout.MaxHeight(MarginControllerMaxHeight));
+            GUI.DrawTexture(controlRect, _sourceTexture, ScaleMode.ScaleToFit, true);
+            DrawMarginControllerOverlay(controlRect);
+            HandleMarginControllerInput(controlRect);
+
+            EditorGUILayout.LabelField(
+                TFormat(
+                    "marginControllerValues",
+                    "L {0} / T {1} / R {2} / B {3}",
+                    _gridSettings.MarginLeft,
+                    _gridSettings.MarginTop,
+                    _gridSettings.MarginRight,
+                    _gridSettings.MarginBottom),
+                EditorStyles.miniLabel);
+        }
+
+        private void DrawVariableGridSettings()
+        {
+            EditorGUILayout.HelpBox(T("variableGridHelp", "Enable custom column widths or row heights when each grid segment should use a different boundary position."), MessageType.None);
+
+            var customColumns = _gridSettings.ColumnWidths != null && _gridSettings.ColumnWidths.Length == _gridSettings.Columns;
+            var nextCustomColumns = EditorGUILayout.Toggle(T("customColumns", "Custom Columns"), customColumns);
+            if (nextCustomColumns != customColumns)
+            {
+                _gridSettings.ColumnWidths = nextCustomColumns ? BuildDefaultCustomSizes(true) : null;
+            }
+
+            if (_gridSettings.ColumnWidths != null)
+            {
+                DrawBoundaryEditors(true);
+            }
+
+            EditorGUILayout.Space(4f);
+
+            var customRows = _gridSettings.RowHeights != null && _gridSettings.RowHeights.Length == _gridSettings.Rows;
+            var nextCustomRows = EditorGUILayout.Toggle(T("customRows", "Custom Rows"), customRows);
+            if (nextCustomRows != customRows)
+            {
+                _gridSettings.RowHeights = nextCustomRows ? BuildDefaultCustomSizes(false) : null;
+            }
+
+            if (_gridSettings.RowHeights != null)
+            {
+                DrawBoundaryEditors(false);
+            }
+        }
+
+        private void DrawBoundaryEditors(bool columns)
+        {
+            var sizes = columns ? _gridSettings.ColumnWidths : _gridSettings.RowHeights;
+            var count = columns ? _gridSettings.Columns : _gridSettings.Rows;
+            var sourceSize = columns ? GetSourceWidth() : GetSourceHeight();
+            var gutter = columns ? _gridSettings.GutterX : _gridSettings.GutterY;
+            var labelPrefix = columns ? T("columnBoundary", "Column Boundary") : T("rowBoundary", "Row Boundary");
+            var summaryPrefix = columns ? T("columnWidth", "Column Width") : T("rowHeight", "Row Height");
+
+            if (sizes == null || count <= 0)
+            {
+                return;
+            }
+
+            if (sourceSize <= 0)
+            {
+                if (columns)
+                {
+                    _gridSettings.MarginLeft = DrawIntFieldWithSlider(T("marginLeft", "Margin Left"), _gridSettings.MarginLeft, 0, GetPixelSliderMax(_gridSettings.MarginLeft, 0));
+                    _gridSettings.MarginRight = DrawIntFieldWithSlider(T("marginRight", "Margin Right"), _gridSettings.MarginRight, 0, GetPixelSliderMax(_gridSettings.MarginRight, 0));
+                }
+                else
+                {
+                    _gridSettings.MarginTop = DrawIntFieldWithSlider(T("marginTop", "Margin Top"), _gridSettings.MarginTop, 0, GetPixelSliderMax(_gridSettings.MarginTop, 0));
+                    _gridSettings.MarginBottom = DrawIntFieldWithSlider(T("marginBottom", "Margin Bottom"), _gridSettings.MarginBottom, 0, GetPixelSliderMax(_gridSettings.MarginBottom, 0));
+                }
+
+                for (var index = 0; index < sizes.Length; index++)
+                {
+                    sizes[index] = DrawIntFieldWithSlider($"{summaryPrefix} {index + 1}", sizes[index], 1, GetPixelSliderMax(sizes[index], 0));
+                }
+
+                return;
+            }
+
+            if (columns)
+            {
+                DrawCustomMarginSlider(
+                    T("marginLeft", "Margin Left"),
+                    _gridSettings.MarginLeft,
+                    0,
+                    GetCustomMarginMax(sourceSize, _gridSettings.MarginRight, gutter, sizes, true),
+                    nextValue =>
+                    {
+                        var margin = _gridSettings.MarginLeft;
+                        AdjustLeadingMargin(ref margin, sizes, nextValue);
+                        _gridSettings.MarginLeft = margin;
+                    });
+                DrawCustomMarginSlider(
+                    T("marginRight", "Margin Right"),
+                    _gridSettings.MarginRight,
+                    0,
+                    GetCustomMarginMax(sourceSize, _gridSettings.MarginLeft, gutter, sizes, false),
+                    nextValue =>
+                    {
+                        var margin = _gridSettings.MarginRight;
+                        AdjustTrailingMargin(ref margin, sizes, nextValue);
+                        _gridSettings.MarginRight = margin;
+                    });
+            }
+            else
+            {
+                DrawCustomMarginSlider(
+                    T("marginTop", "Margin Top"),
+                    _gridSettings.MarginTop,
+                    0,
+                    GetCustomMarginMax(sourceSize, _gridSettings.MarginBottom, gutter, sizes, true),
+                    nextValue =>
+                    {
+                        var margin = _gridSettings.MarginTop;
+                        AdjustLeadingMargin(ref margin, sizes, nextValue);
+                        _gridSettings.MarginTop = margin;
+                    });
+                DrawCustomMarginSlider(
+                    T("marginBottom", "Margin Bottom"),
+                    _gridSettings.MarginBottom,
+                    0,
+                    GetCustomMarginMax(sourceSize, _gridSettings.MarginTop, gutter, sizes, false),
+                    nextValue =>
+                    {
+                        var margin = _gridSettings.MarginBottom;
+                        AdjustTrailingMargin(ref margin, sizes, nextValue);
+                        _gridSettings.MarginBottom = margin;
+                    });
+            }
+
+            var leadingMargin = columns ? _gridSettings.MarginLeft : _gridSettings.MarginTop;
+            var trailingMargin = columns ? _gridSettings.MarginRight : _gridSettings.MarginBottom;
+
+            for (var index = 0; index < count - 1; index++)
+            {
+                var minBoundary = GetBoundaryMinimum(sizes, leadingMargin, gutter, index);
+                var maxBoundary = GetBoundaryMaximum(sizes, sourceSize, trailingMargin, gutter, index);
+                var boundary = GetBoundaryPosition(sizes, leadingMargin, gutter, index);
+                var clampedBoundary = DrawIntFieldWithSlider($"{labelPrefix} {index + 1}", boundary, minBoundary, maxBoundary);
+                if (clampedBoundary != boundary)
+                {
+                    SetBoundaryPosition(sizes, leadingMargin, gutter, index, clampedBoundary);
+                }
+            }
+
+            EditorGUILayout.LabelField(
+                string.Join(", ", sizes.Select((size, index) => $"{summaryPrefix} {index + 1}: {size}")),
+                EditorStyles.miniLabel);
+        }
+
+        private int[] BuildDefaultCustomSizes(bool columns)
+        {
+            var settings = new GridSettings
+            {
+                Rows = _gridSettings.Rows,
+                Columns = _gridSettings.Columns,
+                MarginLeft = _gridSettings.MarginLeft,
+                MarginTop = _gridSettings.MarginTop,
+                MarginRight = _gridSettings.MarginRight,
+                MarginBottom = _gridSettings.MarginBottom,
+                GutterX = _gridSettings.GutterX,
+                GutterY = _gridSettings.GutterY,
+                CellWidth = _gridSettings.CellWidth,
+                CellHeight = _gridSettings.CellHeight
+            };
+
+            var result = GridCalculator.Calculate(GetSourceWidth(), GetSourceHeight(), settings);
+            if (result.Cells.Count > 0)
+            {
+                return columns
+                    ? result.Cells.Where(cell => cell.Coordinate.Row == 0).Select(cell => cell.Width).ToArray()
+                    : result.Cells.Where(cell => cell.Coordinate.Column == 0).Select(cell => cell.Height).ToArray();
+            }
+
+            var count = columns ? Mathf.Max(1, _gridSettings.Columns) : Mathf.Max(1, _gridSettings.Rows);
+            var fallback = new int[count];
+            for (var index = 0; index < count; index++)
+            {
+                fallback[index] = 32;
+            }
+
+            return fallback;
+        }
+
+        private void NormalizeCustomGridArrays()
+        {
+            if (_gridSettings.ColumnWidths != null && _gridSettings.ColumnWidths.Length != _gridSettings.Columns)
+            {
+                _gridSettings.ColumnWidths = BuildDefaultCustomSizes(true);
+            }
+
+            if (_gridSettings.RowHeights != null && _gridSettings.RowHeights.Length != _gridSettings.Rows)
+            {
+                _gridSettings.RowHeights = BuildDefaultCustomSizes(false);
+            }
+        }
+
+        private static int GetBoundaryPosition(IReadOnlyList<int> sizes, int leadingMargin, int gutter, int boundaryIndex)
+        {
+            var position = leadingMargin;
+            for (var index = 0; index <= boundaryIndex; index++)
+            {
+                position += sizes[index];
+                if (index < boundaryIndex)
+                {
+                    position += gutter;
+                }
+            }
+
+            return position;
+        }
+
+        private static int GetBoundaryMinimum(IReadOnlyList<int> sizes, int leadingMargin, int gutter, int boundaryIndex)
+        {
+            var minimum = leadingMargin;
+            for (var index = 0; index < boundaryIndex; index++)
+            {
+                minimum += sizes[index] + gutter;
+            }
+
+            return minimum + 1;
+        }
+
+        private static int GetBoundaryMaximum(IReadOnlyList<int> sizes, int sourceSize, int trailingMargin, int gutter, int boundaryIndex)
+        {
+            var remaining = trailingMargin;
+            for (var index = sizes.Count - 1; index > boundaryIndex + 1; index--)
+            {
+                remaining += sizes[index] + gutter;
+            }
+
+            remaining += sizes[boundaryIndex + 1] > 0 ? 1 : 0;
+            return sourceSize - remaining - gutter;
+        }
+
+        private void DrawCustomMarginSlider(string label, int value, int min, int max, Action<int> applyValue)
+        {
+            var nextValue = DrawIntFieldWithSlider(label, value, min, Mathf.Max(min, max));
+            if (nextValue != value)
+            {
+                applyValue(nextValue);
+            }
+        }
+
+        private static int GetCustomMarginMax(int sourceSize, int oppositeMargin, int gutter, IReadOnlyList<int> sizes, bool leading)
+        {
+            var otherCells = 0;
+            for (var index = 0; index < sizes.Count; index++)
+            {
+                var isAdjustableEdge = leading ? index == 0 : index == sizes.Count - 1;
+                if (!isAdjustableEdge)
+                {
+                    otherCells += sizes[index];
+                }
+            }
+
+            var minEdgeSize = 1;
+            var gutters = Mathf.Max(0, sizes.Count - 1) * gutter;
+            return Mathf.Max(0, sourceSize - oppositeMargin - gutters - otherCells - minEdgeSize);
+        }
+
+        private static void AdjustLeadingMargin(ref int margin, IList<int> sizes, int nextMargin)
+        {
+            var delta = nextMargin - margin;
+            margin = nextMargin;
+            sizes[0] = Mathf.Max(1, sizes[0] - delta);
+        }
+
+        private static void AdjustTrailingMargin(ref int margin, IList<int> sizes, int nextMargin)
+        {
+            var delta = nextMargin - margin;
+            margin = nextMargin;
+            var lastIndex = sizes.Count - 1;
+            sizes[lastIndex] = Mathf.Max(1, sizes[lastIndex] - delta);
+        }
+
+        private static int Sum(IReadOnlyList<int> values)
+        {
+            var total = 0;
+            for (var index = 0; index < values.Count; index++)
+            {
+                total += values[index];
+            }
+
+            return total;
+        }
+
+        private static void SetBoundaryPosition(IList<int> sizes, int leadingMargin, int gutter, int boundaryIndex, int boundaryPosition)
+        {
+            var previousBoundary = leadingMargin;
+            for (var index = 0; index < boundaryIndex; index++)
+            {
+                previousBoundary += sizes[index] + gutter;
+            }
+
+            var nextBoundary = previousBoundary + sizes[boundaryIndex] + gutter + sizes[boundaryIndex + 1];
+            sizes[boundaryIndex] = Mathf.Max(1, boundaryPosition - previousBoundary);
+            sizes[boundaryIndex + 1] = Mathf.Max(1, nextBoundary - gutter - boundaryPosition);
+        }
+
+        private void DrawMarginControllerOverlay(Rect rect)
+        {
+            var left = GetMarginGuideX(rect, true);
+            var right = GetMarginGuideX(rect, false);
+            var top = GetMarginGuideY(rect, true);
+            var bottom = GetMarginGuideY(rect, false);
+
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, Mathf.Max(0f, left - rect.x), rect.height), new Color(0f, 0f, 0f, 0.2f));
+            EditorGUI.DrawRect(new Rect(right, rect.y, Mathf.Max(0f, rect.xMax - right), rect.height), new Color(0f, 0f, 0f, 0.2f));
+            EditorGUI.DrawRect(new Rect(left, rect.y, Mathf.Max(0f, right - left), Mathf.Max(0f, top - rect.y)), new Color(0f, 0f, 0f, 0.2f));
+            EditorGUI.DrawRect(new Rect(left, bottom, Mathf.Max(0f, right - left), Mathf.Max(0f, rect.yMax - bottom)), new Color(0f, 0f, 0f, 0.2f));
+
+            var handleColor = new Color(0.12f, 0.78f, 1f, 0.95f);
+            EditorGUI.DrawRect(new Rect(left - (MarginControllerLineThickness * 0.5f), rect.y, MarginControllerLineThickness, rect.height), handleColor);
+            EditorGUI.DrawRect(new Rect(right - (MarginControllerLineThickness * 0.5f), rect.y, MarginControllerLineThickness, rect.height), handleColor);
+            EditorGUI.DrawRect(new Rect(rect.x, top - (MarginControllerLineThickness * 0.5f), rect.width, MarginControllerLineThickness), handleColor);
+            EditorGUI.DrawRect(new Rect(rect.x, bottom - (MarginControllerLineThickness * 0.5f), rect.width, MarginControllerLineThickness), handleColor);
+            DrawOutline(rect, handleColor, 1f);
+        }
+
+        private void HandleMarginControllerInput(Rect rect)
+        {
+            var currentEvent = Event.current;
+            switch (currentEvent.type)
+            {
+                case EventType.MouseDown:
+                    if (currentEvent.button == 0 && rect.Contains(currentEvent.mousePosition))
+                    {
+                        _activeMarginDragHandle = GetMarginDragHandle(rect, currentEvent.mousePosition);
+                        if (_activeMarginDragHandle != MarginDragHandle.None)
+                        {
+                            UpdateMarginFromMouse(rect, currentEvent.mousePosition);
+                            currentEvent.Use();
+                        }
+                    }
+
+                    break;
+
+                case EventType.MouseDrag:
+                    if (_activeMarginDragHandle != MarginDragHandle.None)
+                    {
+                        UpdateMarginFromMouse(rect, currentEvent.mousePosition);
+                        currentEvent.Use();
+                        Repaint();
+                    }
+
+                    break;
+
+                case EventType.MouseUp:
+                    if (_activeMarginDragHandle != MarginDragHandle.None)
+                    {
+                        UpdateMarginFromMouse(rect, currentEvent.mousePosition);
+                        _activeMarginDragHandle = MarginDragHandle.None;
+                        currentEvent.Use();
+                        Repaint();
+                    }
+
+                    break;
+            }
+        }
+
+        private MarginDragHandle GetMarginDragHandle(Rect rect, Vector2 mousePosition)
+        {
+            var leftDistance = Mathf.Abs(mousePosition.x - GetMarginGuideX(rect, true));
+            var rightDistance = Mathf.Abs(mousePosition.x - GetMarginGuideX(rect, false));
+            var topDistance = Mathf.Abs(mousePosition.y - GetMarginGuideY(rect, true));
+            var bottomDistance = Mathf.Abs(mousePosition.y - GetMarginGuideY(rect, false));
+            var nearest = MarginControllerHitPadding;
+            var handle = MarginDragHandle.None;
+
+            if (leftDistance <= nearest)
+            {
+                nearest = leftDistance;
+                handle = MarginDragHandle.Left;
+            }
+
+            if (rightDistance <= nearest)
+            {
+                nearest = rightDistance;
+                handle = MarginDragHandle.Right;
+            }
+
+            if (topDistance <= nearest)
+            {
+                nearest = topDistance;
+                handle = MarginDragHandle.Top;
+            }
+
+            if (bottomDistance <= nearest)
+            {
+                handle = MarginDragHandle.Bottom;
+            }
+
+            return handle;
+        }
+
+        private void UpdateMarginFromMouse(Rect rect, Vector2 mousePosition)
+        {
+            var sourceWidth = GetSourceWidth();
+            var sourceHeight = GetSourceHeight();
+            if (sourceWidth <= 0 || sourceHeight <= 0)
+            {
+                return;
+            }
+
+            var localX = Mathf.Clamp(mousePosition.x, rect.x, rect.xMax) - rect.x;
+            var localY = Mathf.Clamp(mousePosition.y, rect.y, rect.yMax) - rect.y;
+            var xPixels = Mathf.RoundToInt((localX / rect.width) * sourceWidth);
+            var yPixels = Mathf.RoundToInt((localY / rect.height) * sourceHeight);
+
+            switch (_activeMarginDragHandle)
+            {
+                case MarginDragHandle.Left:
+                    _gridSettings.MarginLeft = Mathf.Clamp(xPixels, 0, sourceWidth - _gridSettings.MarginRight);
+                    break;
+                case MarginDragHandle.Top:
+                    _gridSettings.MarginTop = Mathf.Clamp(yPixels, 0, sourceHeight - _gridSettings.MarginBottom);
+                    break;
+                case MarginDragHandle.Right:
+                    _gridSettings.MarginRight = Mathf.Clamp(sourceWidth - xPixels, 0, sourceWidth - _gridSettings.MarginLeft);
+                    break;
+                case MarginDragHandle.Bottom:
+                    _gridSettings.MarginBottom = Mathf.Clamp(sourceHeight - yPixels, 0, sourceHeight - _gridSettings.MarginTop);
+                    break;
+            }
+        }
+
+        private float GetMarginGuideX(Rect rect, bool leading)
+        {
+            var sourceWidth = Mathf.Max(1, GetSourceWidth());
+            var pixels = leading ? _gridSettings.MarginLeft : sourceWidth - _gridSettings.MarginRight;
+            return rect.x + ((float)pixels / sourceWidth * rect.width);
+        }
+
+        private float GetMarginGuideY(Rect rect, bool leading)
+        {
+            var sourceHeight = Mathf.Max(1, GetSourceHeight());
+            var pixels = leading ? _gridSettings.MarginTop : sourceHeight - _gridSettings.MarginBottom;
+            return rect.y + ((float)pixels / sourceHeight * rect.height);
+        }
+
+        private int DrawIntFieldWithSlider(string label, int value, int min, int max)
+        {
+            var headerRect = EditorGUILayout.GetControlRect();
+            var labelRect = new Rect(headerRect.x, headerRect.y, 140f, headerRect.height);
+            var fieldRect = new Rect(headerRect.xMax - 72f, headerRect.y, 72f, headerRect.height);
+            EditorGUI.LabelField(labelRect, label);
+            value = EditorGUI.IntField(fieldRect, value);
+
+            var sliderRect = EditorGUILayout.GetControlRect();
+            sliderRect.xMin += 18f;
+            var sliderValue = GUI.HorizontalSlider(sliderRect, value, min, max);
+            return Mathf.Clamp(Mathf.RoundToInt(sliderValue), min, max);
+        }
+
+        private int? DrawNullableIntWithSlider(string label, int? value, int min, int max)
+        {
+            var enabled = value.HasValue;
+            var headerRect = EditorGUILayout.GetControlRect();
+            var toggleRect = new Rect(headerRect.x, headerRect.y, 16f, headerRect.height);
+            var labelRect = new Rect(headerRect.x + 20f, headerRect.y, 120f, headerRect.height);
+            var fieldRect = new Rect(headerRect.xMax - 72f, headerRect.y, 72f, headerRect.height);
+            enabled = EditorGUI.Toggle(toggleRect, enabled);
+            EditorGUI.LabelField(labelRect, label);
+            using (new EditorGUI.DisabledScope(!enabled))
+            {
+                value = EditorGUI.IntField(fieldRect, value ?? min);
+            }
+
+            using (new EditorGUI.DisabledScope(!enabled))
+            {
+                var sliderRect = EditorGUILayout.GetControlRect();
+                sliderRect.xMin += 18f;
+                var sliderValue = GUI.HorizontalSlider(sliderRect, value ?? min, min, max);
+                var nextValue = Mathf.Clamp(Mathf.RoundToInt(sliderValue), min, max);
+                return enabled ? nextValue : (int?)null;
+            }
+        }
+
+        private int GetCountSliderMax(int currentValue)
+        {
+            return Mathf.Max(32, currentValue);
+        }
+
+        private int GetPixelSliderMax(int currentValue, int sourceDimension)
+        {
+            return Mathf.Max(64, Mathf.Max(currentValue, sourceDimension));
+        }
+
+        private int GetSourceWidth()
+        {
+            return _sourceTexture == null ? 0 : _sourceTexture.width;
+        }
+
+        private int GetSourceHeight()
+        {
+            return _sourceTexture == null ? 0 : _sourceTexture.height;
+        }
+
         private void OpenParameterHelpWindow()
         {
             _parameterHelpWindow = GetWindow<ParameterHelpWindow>();
@@ -239,44 +767,104 @@ namespace Sunmax.GridAssetSlicer.Editor
                 DrawSectionHeader(T("workspace", "Workspace"));
                 CalculatePreview();
 
-                EditorGUILayout.LabelField(T("source", "Source"), _sourceTexture == null ? "-" : AssetDatabase.GetAssetPath(_sourceTexture));
-                EditorGUILayout.LabelField(T("detectedGrid", "Detected Grid"), $"{_gridSettings.Columns} x {_gridSettings.Rows}");
-                EditorGUILayout.LabelField(T("totalCells", "Total Cells"), _lastGridResult.Cells.Count.ToString());
-                EditorGUILayout.LabelField(T("included", "Included"), _lastGridResult.Cells.Count(cell => !IsExcluded(cell.Coordinate)).ToString());
-                EditorGUILayout.LabelField(T("excluded", "Excluded"), _selection.ExcludedCells.Count.ToString());
-
-                DrawSectionSeparator();
-                DrawOutputSettings();
-
-                DrawSectionSeparator();
-                EditorGUILayout.HelpBox(T("detachedPreviewHelp", "Preview is shown in a separate resizable window. Use the toolbar Preview button to inspect cells while editing settings here."), MessageType.Info);
-
-                if (_sourceTexture != null && _lastGridResult.Errors.Count > 0)
+                if (_sourceTexture == null)
                 {
-                    foreach (var error in _lastGridResult.Errors)
+                    using (new EditorGUILayout.VerticalScope(GUI.skin.box))
                     {
-                        EditorGUILayout.HelpBox(LocalizeMessage(error), MessageType.Warning);
+                        EditorGUILayout.HelpBox(T("workspaceEmptyTitle", "Source image is not selected."), MessageType.Info);
+                        EditorGUILayout.LabelField(T("workspaceEmptyBody", "Select a Texture2D in the toolbar, then adjust rows, columns, and margins from the left settings pane."), EditorStyles.wordWrappedMiniLabel);
+                        EditorGUILayout.Space(4f);
+                        EditorGUILayout.LabelField(T("workspaceFlowHint", "Workflow: Source -> Settings -> Preview -> Export -> Save Session"), EditorStyles.miniBoldLabel);
+                    }
+
+                    return;
+                }
+
+                using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+                {
+                    DrawSectionHeader(T("workspaceSummary", "Current Summary"));
+                    DrawSummaryRow(T("source", "Source"), AssetDatabase.GetAssetPath(_sourceTexture));
+                    DrawSummaryRow(T("detectedGrid", "Detected Grid"), $"{_gridSettings.Columns} x {_gridSettings.Rows}");
+                    DrawSummaryRow(T("totalCells", "Total Cells"), _lastGridResult.Cells.Count.ToString());
+                    DrawSummaryRow(T("included", "Included"), _lastGridResult.Cells.Count(cell => !IsExcluded(cell.Coordinate)).ToString());
+                    DrawSummaryRow(T("excluded", "Excluded"), _selection.ExcludedCells.Count.ToString());
+                    DrawSummaryRow(T("readableSource", "Readable Source"), IsSourceReadable() ? T("pass", "Pass") : T("warning", "Warning"));
+                }
+
+                EditorGUILayout.Space(6f);
+                using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+                {
+                    DrawSectionHeader(T("workspaceActions", "Next Actions"));
+                    EditorGUILayout.HelpBox(T("detachedPreviewHelp", "Preview is shown in a separate resizable window. Use the Preview button to inspect cells while editing settings here."), MessageType.Info);
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (GUILayout.Button(T("preview", "Preview"), GUILayout.Width(120f)))
+                        {
+                            OpenDetachedPreviewWindow();
+                        }
+
+                        using (new EditorGUI.DisabledScope(_lastGridResult.Cells.Count == 0))
+                        {
+                            if (GUILayout.Button(T("export", "Export..."), GUILayout.Width(120f)))
+                            {
+                                ExportCells();
+                            }
+                        }
+                    }
+
+                    if (_selectedCell.HasValue)
+                    {
+                        var selectedRect = GetSelectedRect();
+                        if (selectedRect.HasValue)
+                        {
+                            EditorGUILayout.LabelField(
+                                TFormat(
+                                    "workspaceSelectedCell",
+                                    "Selected cell: Row {0}, Column {1}",
+                                    selectedRect.Value.Coordinate.Row,
+                                    selectedRect.Value.Coordinate.Column),
+                                EditorStyles.miniLabel);
+                        }
+                    }
+                    else
+                    {
+                        EditorGUILayout.LabelField(T("workspaceNoSelectedCell", "No cell is selected. Use the preview window to inspect one cell in detail."), EditorStyles.miniLabel);
                     }
                 }
 
-                DrawSectionSeparator();
-                DrawSectionHeader(T("latestExportSummary", "Latest Export"));
-                if (_lastExportResult == null)
+                if (_lastGridResult.Errors.Count > 0)
                 {
-                    EditorGUILayout.LabelField(T("noExportResult", "No export result yet."), EditorStyles.miniLabel);
+                    EditorGUILayout.Space(6f);
+                    using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+                    {
+                        DrawSectionHeader(T("workspaceWarnings", "Current Warnings"));
+                        foreach (var error in _lastGridResult.Errors)
+                        {
+                            EditorGUILayout.HelpBox(LocalizeMessage(error), MessageType.Warning);
+                        }
+                    }
                 }
-                else
+
+                EditorGUILayout.Space(6f);
+                using (new EditorGUILayout.VerticalScope(GUI.skin.box))
                 {
-                    EditorGUILayout.LabelField(T("exported", "Exported"), _lastExportResult.ExportedFiles.Count.ToString());
-                    EditorGUILayout.LabelField(T("skipped", "Skipped"), _lastExportResult.SkippedFiles.Count.ToString());
-                    EditorGUILayout.LabelField(T("error", "Error"), _lastExportResult.Errors.Count.ToString());
+                    DrawSectionHeader(T("latestExportSummary", "Latest Export"));
+                    if (_lastExportResult == null)
+                    {
+                        EditorGUILayout.LabelField(T("noExportResult", "No export result yet."), EditorStyles.miniLabel);
+                    }
+                    else
+                    {
+                        DrawSummaryRow(T("exported", "Exported"), _lastExportResult.ExportedFiles.Count.ToString());
+                        DrawSummaryRow(T("skipped", "Skipped"), _lastExportResult.SkippedFiles.Count.ToString());
+                        DrawSummaryRow(T("error", "Error"), _lastExportResult.Errors.Count.ToString());
+                    }
                 }
             }
         }
 
         private void DrawOutputSettings()
         {
-            DrawSectionHeader(T("output", "Output"));
             using (new EditorGUILayout.HorizontalScope())
             {
                 _exportSettings.OutputFolder = EditorGUILayout.TextField(T("outputFolder", "Output Folder"), _exportSettings.OutputFolder);
@@ -293,6 +881,8 @@ namespace Sunmax.GridAssetSlicer.Editor
             _exportSettings.FilePrefix = EditorGUILayout.TextField(T("outputPrefix", "Output Prefix"), _exportSettings.FilePrefix);
             _exportSettings.StartIndex = EditorGUILayout.IntField(T("startIndex", "Start Index"), _exportSettings.StartIndex);
             _exportSettings.NumberPadding = EditorGUILayout.IntField(T("serialDigits", "Serial Digits"), _exportSettings.NumberPadding);
+            _exportSettings.OutputWidth = DrawNullableIntWithSlider(T("outputWidth", "Output Width"), _exportSettings.OutputWidth, 1, GetPixelSliderMax(_exportSettings.OutputWidth ?? 64, 4096));
+            _exportSettings.OutputHeight = DrawNullableIntWithSlider(T("outputHeight", "Output Height"), _exportSettings.OutputHeight, 1, GetPixelSliderMax(_exportSettings.OutputHeight ?? 64, 4096));
             _exportSettings.ConflictBehavior = (ExportConflictBehavior)EditorGUILayout.EnumPopup(T("conflictMode", "Conflict Mode"), _exportSettings.ConflictBehavior);
         }
 
@@ -380,6 +970,15 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
         }
 
+        private enum MarginDragHandle
+        {
+            None,
+            Left,
+            Top,
+            Right,
+            Bottom
+        }
+
         private sealed class ParameterHelpWindow : EditorWindow
         {
             private GridAssetSlicerWindow _owner;
@@ -419,12 +1018,23 @@ namespace Sunmax.GridAssetSlicer.Editor
                     ("cellWidth", "Cell Width", "help.cellWidth", "Explicit cell width. Turn it off to calculate width from the source image, margins, gutters, and column count."),
                     ("cellHeight", "Cell Height", "help.cellHeight", "Explicit cell height. Turn it off to calculate height from the source image, margins, gutters, and row count.")
                 });
+                _owner.DrawHelpSection("marginController", "Margin Controller", new[]
+                {
+                    ("marginController", "Margin Controller", "marginControllerHelp", "Drag the guide lines on this source-image controller to adjust the margins without opening the preview window.")
+                });
+                _owner.DrawHelpSection("variableGrid", "Variable Grid Boundaries", new[]
+                {
+                    ("customColumns", "Custom Columns", "variableGridHelp", "Enable custom widths when each column boundary must be adjusted independently."),
+                    ("customRows", "Custom Rows", "variableGridHelp", "Enable custom heights when each row boundary must be adjusted independently.")
+                });
                 _owner.DrawHelpSection("output", "Output", new[]
                 {
                     ("outputFolder", "Output Folder", "help.outputFolder", "Project-relative folder where generated PNG files are written."),
                     ("outputPrefix", "Output Prefix", "help.outputPrefix", "Prefix used before the serial number in each generated file name."),
                     ("startIndex", "Start Index", "help.startIndex", "First serial number used when naming exported cells."),
                     ("serialDigits", "Serial Digits", "help.serialDigits", "Minimum digit count for serial numbers. For example, 3 produces 001."),
+                    ("outputWidth", "Output Width", "help.outputWidth", "Uniform width used for every exported PNG when enabled."),
+                    ("outputHeight", "Output Height", "help.outputHeight", "Uniform height used for every exported PNG when enabled."),
                     ("conflictMode", "Conflict Mode", "help.conflictMode", "Select how export behaves when a target file already exists: overwrite, skip, or create a duplicate name.")
                 });
                 _owner.DrawHelpSection("qualityChecks", "Quality Checks", new[]
@@ -438,34 +1048,30 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
         }
 
-        private void DrawRightPane()
+        private void DrawInspectorPaneContent()
         {
-            using (new EditorGUILayout.VerticalScope(GUILayout.Width(RightPaneWidth)))
+            var selectedRect = GetSelectedRect();
+            if (selectedRect == null)
             {
-                DrawSectionHeader(T("cellInspector", "Cell Inspector"));
-                var selectedRect = GetSelectedRect();
-                if (selectedRect == null)
+                EditorGUILayout.HelpBox(T("selectCell", "Select a cell in the preview."), MessageType.Info);
+            }
+            else
+            {
+                var rect = selectedRect.Value;
+                EditorGUILayout.LabelField(T("index", "Index"), GetCellIndex(rect.Coordinate).ToString());
+                EditorGUILayout.LabelField(T("coordinate", "Coordinate"), TFormat("coordinateValue", "Row {0}, Column {1}", rect.Coordinate.Row, rect.Coordinate.Column));
+                var included = !IsExcluded(rect.Coordinate);
+                var nextIncluded = EditorGUILayout.Toggle(T("include", "Include"), included);
+                if (nextIncluded != included)
                 {
-                    EditorGUILayout.HelpBox(T("selectCell", "Select a cell in the preview."), MessageType.Info);
+                    SetIncluded(rect.Coordinate, nextIncluded);
                 }
-                else
-                {
-                    var rect = selectedRect.Value;
-                    EditorGUILayout.LabelField(T("index", "Index"), GetCellIndex(rect.Coordinate).ToString());
-                    EditorGUILayout.LabelField(T("coordinate", "Coordinate"), TFormat("coordinateValue", "Row {0}, Column {1}", rect.Coordinate.Row, rect.Coordinate.Column));
-                    var included = !IsExcluded(rect.Coordinate);
-                    var nextIncluded = EditorGUILayout.Toggle(T("include", "Include"), included);
-                    if (nextIncluded != included)
-                    {
-                        SetIncluded(rect.Coordinate, nextIncluded);
-                    }
 
-                    EditorGUILayout.LabelField(T("bounds", "Bounds"), $"X:{rect.X} Y:{rect.Y} W:{rect.Width} H:{rect.Height}");
-                    EditorGUILayout.LabelField(T("outputFile", "Output File"), BuildOutputFileName(rect.Coordinate));
-                    DrawSectionSeparator();
-                    DrawInspectorPreviewSettings();
-                    DrawSelectedPreview(rect);
-                }
+                EditorGUILayout.LabelField(T("bounds", "Bounds"), $"X:{rect.X} Y:{rect.Y} W:{rect.Width} H:{rect.Height}");
+                EditorGUILayout.LabelField(T("outputFile", "Output File"), BuildOutputFileName(rect.Coordinate));
+                DrawSectionSeparator();
+                DrawInspectorPreviewSettings();
+                DrawSelectedPreview(rect);
             }
         }
 
@@ -550,13 +1156,18 @@ namespace Sunmax.GridAssetSlicer.Editor
             entries.Add(_qualityChecks.ReadableSource
                 ? IsSourceReadable()
                     ? QualityReportEntry.Pass(T("readableSource", "Readable Source"), T("quality.readable.pass", "Source texture pixels can be read."))
-                    : QualityReportEntry.Fail(T("readableSource", "Readable Source"), T("quality.readable.fail", "Source texture is missing or not readable. Export may fail."))
+                    : QualityReportEntry.Warning(T("readableSource", "Readable Source"), T("quality.readable.fail", "Source texture is not directly readable. Export uses a temporary readable copy."))
                 : QualityReportEntry.Disabled(T("readableSource", "Readable Source"), T("quality.disabled", "This quality check is turned off.")));
 
-            var outputErrors = ExportFileNameResolver.BuildPlan(
-                _exportSettings,
-                new[] { new CellCoordinate(0, 0) },
-                _ => false).Errors;
+            var outputErrors = ExportSettingsValidator.Validate(_exportSettings).ToList();
+            if (outputErrors.Count == 0)
+            {
+                outputErrors.AddRange(ExportFileNameResolver.BuildPlan(
+                    _exportSettings,
+                    new[] { new CellCoordinate(0, 0) },
+                    _ => false).Errors);
+            }
+
             entries.Add(_qualityChecks.OutputSettings
                 ? outputErrors.Count == 0
                     ? QualityReportEntry.Pass(T("outputSettings", "Output Settings"), T("quality.output.pass", "Output settings are valid."))
@@ -700,6 +1311,30 @@ namespace Sunmax.GridAssetSlicer.Editor
             EditorGUILayout.Space(4f);
         }
 
+        private void DrawFoldoutSection(ref bool isExpanded, string label, Action drawContent)
+        {
+            using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+            {
+                isExpanded = EditorGUILayout.Foldout(isExpanded, label, true);
+                if (isExpanded)
+                {
+                    EditorGUILayout.Space(4f);
+                    drawContent?.Invoke();
+                }
+            }
+
+            EditorGUILayout.Space(6f);
+        }
+
+        private static void DrawSummaryRow(string label, string value)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField(label, GUILayout.Width(110f));
+                EditorGUILayout.LabelField(value, EditorStyles.wordWrappedMiniLabel);
+            }
+        }
+
         private static void DrawSectionSeparator()
         {
             EditorGUILayout.Space(8f);
@@ -741,11 +1376,11 @@ namespace Sunmax.GridAssetSlicer.Editor
                 return;
             }
 
-            var tempCopyPath = string.Empty;
             Texture2D exportTexture = null;
+            var shouldDestroyExportTexture = false;
             try
             {
-                exportTexture = PrepareExportTexture(out tempCopyPath);
+                exportTexture = PrepareExportTexture(out shouldDestroyExportTexture);
                 var result = PngExporter.Export(new PngExportRequest(exportTexture, _lastGridResult.Cells, _selection, _exportSettings));
                 _lastExportResult = result;
                 AssetDatabaseExportRefresher.RefreshIfExportedUnderAssets(result);
@@ -755,13 +1390,13 @@ namespace Sunmax.GridAssetSlicer.Editor
             }
             finally
             {
-                CleanupReadableCopy(tempCopyPath);
+                CleanupReadableTexture(exportTexture, shouldDestroyExportTexture);
             }
         }
 
-        private Texture2D PrepareExportTexture(out string tempCopyPath)
+        private Texture2D PrepareExportTexture(out bool shouldDestroyExportTexture)
         {
-            tempCopyPath = string.Empty;
+            shouldDestroyExportTexture = false;
             if (IsSourceReadable())
             {
                 return _sourceTexture;
@@ -773,54 +1408,32 @@ namespace Sunmax.GridAssetSlicer.Editor
                 return _sourceTexture;
             }
 
-            if (!AssetDatabase.IsValidFolder("Assets/Generated"))
+            var readableTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!ImageConversion.LoadImage(readableTexture, File.ReadAllBytes(sourcePath)))
             {
-                AssetDatabase.CreateFolder("Assets", "Generated");
-            }
-
-            if (!AssetDatabase.IsValidFolder("Assets/Generated/GridSlicer"))
-            {
-                AssetDatabase.CreateFolder("Assets/Generated", "GridSlicer");
-            }
-
-            if (!AssetDatabase.IsValidFolder(ReadableCopyFolder))
-            {
-                AssetDatabase.CreateFolder("Assets/Generated/GridSlicer", ".TempReadable");
-            }
-
-            var extension = Path.GetExtension(sourcePath);
-            var fileName = $"{Path.GetFileNameWithoutExtension(sourcePath)}_{Guid.NewGuid():N}{extension}";
-            tempCopyPath = $"{ReadableCopyFolder}/{fileName}";
-
-            if (!AssetDatabase.CopyAsset(sourcePath, tempCopyPath))
-            {
-                tempCopyPath = string.Empty;
+                UnityEngine.Object.DestroyImmediate(readableTexture);
                 return _sourceTexture;
             }
 
-            var importer = AssetImporter.GetAtPath(tempCopyPath) as TextureImporter;
-            if (importer != null)
-            {
-                importer.isReadable = true;
-                importer.SaveAndReimport();
-            }
-            else
-            {
-                AssetDatabase.ImportAsset(tempCopyPath, ImportAssetOptions.ForceUpdate);
-            }
-
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(tempCopyPath) ?? _sourceTexture;
+            shouldDestroyExportTexture = true;
+            return readableTexture;
         }
 
-        private static void CleanupReadableCopy(string tempCopyPath)
+        private static void CleanupReadableTexture(Texture2D exportTexture, bool shouldDestroyExportTexture)
         {
-            if (string.IsNullOrWhiteSpace(tempCopyPath))
+            if (!shouldDestroyExportTexture || exportTexture == null)
             {
                 return;
             }
 
-            AssetDatabase.DeleteAsset(tempCopyPath);
-            AssetDatabase.Refresh();
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(exportTexture);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(exportTexture);
+            }
         }
 
         private void SaveSession()
@@ -993,6 +1606,8 @@ namespace Sunmax.GridAssetSlicer.Editor
             {
                 case "Pass":
                     return T("pass", "Pass");
+                case "Warning":
+                    return T("warning", "Warning");
                 case "Fail":
                     return T("fail", "Fail");
                 case "Disabled":
@@ -1034,16 +1649,24 @@ namespace Sunmax.GridAssetSlicer.Editor
                     return T("error.availableWidthPositive", "Available grid width must be greater than zero.");
                 case "Available grid height must be greater than zero.":
                     return T("error.availableHeightPositive", "Available grid height must be greater than zero.");
-                case "Available grid width is not evenly divisible by the cell count.":
-                    return T("error.availableWidthDivisible", "Available grid width is not evenly divisible by the cell count.");
-                case "Available grid height is not evenly divisible by the cell count.":
-                    return T("error.availableHeightDivisible", "Available grid height is not evenly divisible by the cell count.");
-                case "OutputFolder is required.":
+                case "Available grid width must allocate at least one pixel to every cell.":
+                    return T("error.availableWidthPerCell", "Available grid width must allocate at least one pixel to every cell.");
+                case "Available grid height must allocate at least one pixel to every cell.":
+                    return T("error.availableHeightPerCell", "Available grid height must allocate at least one pixel to every cell.");
+                case "Output Folder is required.":
                     return T("error.outputFolderRequired", "Output Folder is required.");
-                case "StartIndex must be zero or greater.":
+                case "Output Prefix is required.":
+                    return T("error.outputPrefixRequired", "Output Prefix is required.");
+                case "Start Index must be zero or greater.":
                     return T("error.startIndexNonNegative", "Start Index must be zero or greater.");
-                case "NumberPadding must be zero or greater.":
+                case "Serial Digits must be zero or greater.":
                     return T("error.numberPaddingNonNegative", "Serial Digits must be zero or greater.");
+                case "Output Width and Output Height must both be specified together.":
+                    return T("error.outputResizeBothRequired", "Output Width and Output Height must both be specified together.");
+                case "Output Width must be greater than zero when specified.":
+                    return T("error.outputWidthPositive", "Output Width must be greater than zero when specified.");
+                case "Output Height must be greater than zero when specified.":
+                    return T("error.outputHeightPositive", "Output Height must be greater than zero when specified.");
                 case "PNG export request is required.":
                     return T("error.exportRequestRequired", "PNG export request is required.");
                 case "Source texture is required.":
@@ -1177,6 +1800,11 @@ namespace Sunmax.GridAssetSlicer.Editor
             public static QualityReportEntry Fail(string name, string details)
             {
                 return new QualityReportEntry(name, "Fail", details);
+            }
+
+            public static QualityReportEntry Warning(string name, string details)
+            {
+                return new QualityReportEntry(name, "Warning", details);
             }
 
             public static QualityReportEntry Disabled(string name, string details)

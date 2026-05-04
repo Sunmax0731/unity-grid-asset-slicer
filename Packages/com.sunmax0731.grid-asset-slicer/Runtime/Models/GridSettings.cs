@@ -21,5 +21,9 @@ namespace Sunmax.GridAssetSlicer
         public int? CellWidth { get; set; }
 
         public int? CellHeight { get; set; }
+
+        public int[] ColumnWidths { get; set; }
+
+        public int[] RowHeights { get; set; }
     }
 }

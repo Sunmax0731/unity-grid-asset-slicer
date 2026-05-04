@@ -47,13 +47,23 @@ Tools > Grid Asset Slicer > メイン画面
 - 水平 / 垂直 gutter
 - 任意の cell width / cell height
 
-明示的な cell size がない場合は、画像サイズと grid 設定から計算する。
+各値は数値入力だけでなく slider でも調整できる。
+
+margin は source image を表示した専用 controller 上で上下左右のガイドをドラッグしても調整できる。
+
+main window の設定フォームは 1 つの pane に集約し、grid 設定、可変境界設定、export 設定、cell inspector を同じ操作領域から編集できる。
+
+明示的な cell size がない場合は、画像サイズと grid 設定から計算する。利用可能領域が行数 / 列数で割り切れない場合でも、各 cell に最低 1 pixel を確保できる限り、preview と export に使える cell rect を生成する。
+
+必要に応じて、各列・各行ごとに区切り位置を個別設定できること。個別設定を使う場合は、列幅 / 行高の配列を session JSON に保存できること。
 
 ### RQ-004 Preview
 
 切り出し予定セルを export 前に preview できる。
 
 preview では、採用セルと除外セルの状態が分かること。
+
+preview で使う cell rect と export で使う cell rect は一致すること。
 
 ### RQ-005 セル採用 / 除外
 
@@ -69,6 +79,7 @@ preview では、採用セルと除外セルの状態が分かること。
 - ファイル prefix
 - 開始番号
 - 連番桁数
+- 書き出し先の統一 width / height
 - 競合時の処理
 
 競合時の処理:
@@ -81,7 +92,7 @@ preview では、採用セルと除外セルの状態が分かること。
 
 選択セルを個別 PNG として出力できる。
 
-MVP では元セルの pixel size を維持する。拡大縮小、padding、trim は将来拡張とする。
+既定では元セルの pixel size を維持する。`Output Width` / `Output Height` が両方指定された場合は、すべての書き出し PNG をその size にリサイズして保存できる。padding、trim は将来拡張とする。
 
 ### RQ-008 Slice Session JSON
 
@@ -144,6 +155,7 @@ Runtime、Editor UI、永続化、任意の画像解析 backend を分離し、U
 - session JSON を保存できる。
 - session JSON 読み込みで source path、grid settings、export settings、除外セルが復元される。
 - Grid 計算、file naming、session serialization、競合解決に EditMode test がある。
+- 非割り切れ implicit grid でも preview / export が成立する EditMode test がある。
 
 ## 6. 将来スコープ
 

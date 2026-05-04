@@ -87,7 +87,7 @@ namespace Sunmax.GridAssetSlicer
             }
             else
             {
-                ValidateExport(session.Export.OutputFolder, session.Export.FilePrefix, session.Export.StartIndex, session.Export.NumberPadding, errors);
+                ExportSettingsValidator.Validate(session.Export, errors);
             }
 
             return errors;
@@ -132,7 +132,17 @@ namespace Sunmax.GridAssetSlicer
             }
             else
             {
-                ValidateExport(dto.export.outputFolder, dto.export.filePrefix, dto.export.startIndex, dto.export.numberPadding, errors);
+                ExportSettingsValidator.Validate(
+                    new ExportSettings
+                    {
+                        OutputFolder = dto.export.outputFolder,
+                        FilePrefix = dto.export.filePrefix,
+                        StartIndex = dto.export.startIndex,
+                        NumberPadding = dto.export.numberPadding,
+                        OutputWidth = dto.export.outputWidth != 0 ? dto.export.outputWidth : (int?)null,
+                        OutputHeight = dto.export.outputHeight != 0 ? dto.export.outputHeight : (int?)null
+                    },
+                    errors);
                 if (!TryParseConflictBehavior(dto.export.conflictBehavior, out _))
                 {
                     errors.Add($"export.conflictBehavior is invalid: {dto.export.conflictBehavior}.");
@@ -168,29 +178,6 @@ namespace Sunmax.GridAssetSlicer
                    && string.IsNullOrWhiteSpace(source.contentHash);
         }
 
-        private static void ValidateExport(string outputFolder, string filePrefix, int startIndex, int numberPadding, ICollection<string> errors)
-        {
-            if (string.IsNullOrWhiteSpace(outputFolder))
-            {
-                errors.Add("export.outputFolder is required.");
-            }
-
-            if (filePrefix == null)
-            {
-                errors.Add("export.filePrefix is required.");
-            }
-
-            if (startIndex < 0)
-            {
-                errors.Add("export.startIndex must be zero or greater.");
-            }
-
-            if (numberPadding < 0)
-            {
-                errors.Add("export.numberPadding must be zero or greater.");
-            }
-        }
-
         private static GridSliceSession FromDto(SessionDto dto)
         {
             var session = new GridSliceSession
@@ -212,6 +199,8 @@ namespace Sunmax.GridAssetSlicer
                     FilePrefix = dto.export.filePrefix,
                     StartIndex = dto.export.startIndex,
                     NumberPadding = dto.export.numberPadding,
+                    OutputWidth = dto.export.outputWidth != 0 ? dto.export.outputWidth : (int?)null,
+                    OutputHeight = dto.export.outputHeight != 0 ? dto.export.outputHeight : (int?)null,
                     ConflictBehavior = ParseConflictBehavior(dto.export.conflictBehavior)
                 },
                 Selection = new SliceSelection()
@@ -241,7 +230,9 @@ namespace Sunmax.GridAssetSlicer
                 GutterX = dto.gutterX,
                 GutterY = dto.gutterY,
                 CellWidth = dto.cellWidth > 0 ? dto.cellWidth : (int?)null,
-                CellHeight = dto.cellHeight > 0 ? dto.cellHeight : (int?)null
+                CellHeight = dto.cellHeight > 0 ? dto.cellHeight : (int?)null,
+                ColumnWidths = dto.columnWidths,
+                RowHeights = dto.rowHeights
             };
         }
 
@@ -277,7 +268,9 @@ namespace Sunmax.GridAssetSlicer
                     gutterX = session.Grid.GutterX,
                     gutterY = session.Grid.GutterY,
                     cellWidth = session.Grid.CellWidth ?? 0,
-                    cellHeight = session.Grid.CellHeight ?? 0
+                    cellHeight = session.Grid.CellHeight ?? 0,
+                    columnWidths = session.Grid.ColumnWidths,
+                    rowHeights = session.Grid.RowHeights
                 },
                 selection = new SelectionDto { excludedCells = excludedCells },
                 export = new ExportDto
@@ -286,6 +279,8 @@ namespace Sunmax.GridAssetSlicer
                     filePrefix = session.Export.FilePrefix,
                     startIndex = session.Export.StartIndex,
                     numberPadding = session.Export.NumberPadding,
+                    outputWidth = session.Export.OutputWidth ?? 0,
+                    outputHeight = session.Export.OutputHeight ?? 0,
                     conflictBehavior = ToJsonValue(session.Export.ConflictBehavior)
                 }
             };
@@ -365,6 +360,8 @@ namespace Sunmax.GridAssetSlicer
             public int gutterY;
             public int cellWidth;
             public int cellHeight;
+            public int[] columnWidths;
+            public int[] rowHeights;
         }
 
         [Serializable]
@@ -387,6 +384,8 @@ namespace Sunmax.GridAssetSlicer
             public string filePrefix;
             public int startIndex;
             public int numberPadding;
+            public int outputWidth;
+            public int outputHeight;
             public string conflictBehavior;
         }
     }

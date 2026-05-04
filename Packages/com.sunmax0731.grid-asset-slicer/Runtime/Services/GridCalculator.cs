@@ -21,23 +21,25 @@ namespace Sunmax.GridAssetSlicer
                 return new GridCalculationResult(Array.Empty<CellRect>(), errors);
             }
 
-            var cellWidth = ResolveCellSize(
+            var cellWidths = ResolveCellSizes(
                 imageWidth,
                 settings.MarginLeft,
                 settings.MarginRight,
                 settings.GutterX,
                 settings.Columns,
                 settings.CellWidth,
+                settings.ColumnWidths,
                 "width",
                 errors);
 
-            var cellHeight = ResolveCellSize(
+            var cellHeights = ResolveCellSizes(
                 imageHeight,
                 settings.MarginTop,
                 settings.MarginBottom,
                 settings.GutterY,
                 settings.Rows,
                 settings.CellHeight,
+                settings.RowHeights,
                 "height",
                 errors);
 
@@ -48,8 +50,8 @@ namespace Sunmax.GridAssetSlicer
 
             var rightLimit = imageWidth - settings.MarginRight;
             var bottomLimit = imageHeight - settings.MarginBottom;
-            var gridRight = settings.MarginLeft + (settings.Columns * cellWidth) + ((settings.Columns - 1) * settings.GutterX);
-            var gridBottom = settings.MarginTop + (settings.Rows * cellHeight) + ((settings.Rows - 1) * settings.GutterY);
+            var gridRight = settings.MarginLeft + Sum(cellWidths) + ((settings.Columns - 1) * settings.GutterX);
+            var gridBottom = settings.MarginTop + Sum(cellHeights) + ((settings.Rows - 1) * settings.GutterY);
 
             if (gridRight > rightLimit)
             {
@@ -62,13 +64,18 @@ namespace Sunmax.GridAssetSlicer
             }
 
             var cells = new List<CellRect>(settings.Rows * settings.Columns);
+            var rowOffsets = BuildOffsets(settings.MarginTop, cellHeights, settings.GutterY);
+            var columnOffsets = BuildOffsets(settings.MarginLeft, cellWidths, settings.GutterX);
             for (var row = 0; row < settings.Rows; row++)
             {
                 for (var column = 0; column < settings.Columns; column++)
                 {
-                    var x = settings.MarginLeft + (column * (cellWidth + settings.GutterX));
-                    var y = settings.MarginTop + (row * (cellHeight + settings.GutterY));
-                    cells.Add(new CellRect(new CellCoordinate(row, column), x, y, cellWidth, cellHeight));
+                    cells.Add(new CellRect(
+                        new CellCoordinate(row, column),
+                        columnOffsets[column],
+                        rowOffsets[row],
+                        cellWidths[column],
+                        cellHeights[row]));
                 }
             }
 
@@ -121,6 +128,9 @@ namespace Sunmax.GridAssetSlicer
             {
                 errors.Add("CellHeight must be greater than zero when specified.");
             }
+
+            ValidateCustomSizes(settings.ColumnWidths, settings.Columns, "ColumnWidths", errors);
+            ValidateCustomSizes(settings.RowHeights, settings.Rows, "RowHeights", errors);
         }
 
         private static void AddNonNegativeError(int value, string name, ICollection<string> errors)
@@ -131,35 +141,112 @@ namespace Sunmax.GridAssetSlicer
             }
         }
 
-        private static int ResolveCellSize(
+        private static int[] ResolveCellSizes(
             int imageSize,
             int leadingMargin,
             int trailingMargin,
             int gutter,
             int cellCount,
             int? explicitCellSize,
+            int[] customCellSizes,
             string axisName,
             ICollection<string> errors)
         {
+            if (customCellSizes != null && customCellSizes.Length > 0)
+            {
+                var sizes = new int[customCellSizes.Length];
+                Array.Copy(customCellSizes, sizes, customCellSizes.Length);
+                return sizes;
+            }
+
             if (explicitCellSize.HasValue)
             {
-                return explicitCellSize.Value;
+                var sizes = new int[cellCount];
+                for (var index = 0; index < cellCount; index++)
+                {
+                    sizes[index] = explicitCellSize.Value;
+                }
+
+                return sizes;
             }
 
             var available = imageSize - leadingMargin - trailingMargin - (gutter * (cellCount - 1));
             if (available <= 0)
             {
                 errors.Add($"Available grid {axisName} must be greater than zero.");
-                return 0;
+                return Array.Empty<int>();
             }
 
-            if (available % cellCount != 0)
+            if (available < cellCount)
             {
-                errors.Add($"Available grid {axisName} is not evenly divisible by the cell count.");
-                return 0;
+                errors.Add($"Available grid {axisName} must allocate at least one pixel to every cell.");
+                return Array.Empty<int>();
             }
 
-            return available / cellCount;
+            var boundaries = new int[cellCount + 1];
+            for (var index = 0; index <= cellCount; index++)
+            {
+                boundaries[index] = (int)Math.Round((double)(index * available) / cellCount, MidpointRounding.AwayFromZero);
+            }
+
+            var cellSizes = new int[cellCount];
+            for (var index = 0; index < cellCount; index++)
+            {
+                cellSizes[index] = boundaries[index + 1] - boundaries[index];
+                if (cellSizes[index] <= 0)
+                {
+                    errors.Add($"Available grid {axisName} must allocate at least one pixel to every cell.");
+                    return Array.Empty<int>();
+                }
+            }
+
+            return cellSizes;
+        }
+
+        private static void ValidateCustomSizes(int[] customSizes, int expectedCount, string fieldName, ICollection<string> errors)
+        {
+            if (customSizes == null || customSizes.Length == 0)
+            {
+                return;
+            }
+
+            if (customSizes.Length != expectedCount)
+            {
+                errors.Add($"{fieldName} length must match the configured cell count.");
+                return;
+            }
+
+            for (var index = 0; index < customSizes.Length; index++)
+            {
+                if (customSizes[index] <= 0)
+                {
+                    errors.Add($"{fieldName}[{index}] must be greater than zero.");
+                }
+            }
+        }
+
+        private static int[] BuildOffsets(int start, IReadOnlyList<int> sizes, int gutter)
+        {
+            var offsets = new int[sizes.Count];
+            var current = start;
+            for (var index = 0; index < sizes.Count; index++)
+            {
+                offsets[index] = current;
+                current += sizes[index] + gutter;
+            }
+
+            return offsets;
+        }
+
+        private static int Sum(IReadOnlyList<int> values)
+        {
+            var total = 0;
+            for (var index = 0; index < values.Count; index++)
+            {
+                total += values[index];
+            }
+
+            return total;
         }
     }
 }
